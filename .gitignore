@@ -1,0 +1,17 @@
+# Android
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# Kotlin
+bin/
+gen/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
