@@ -29,9 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.DismissValue
+import androidx.compose.material3.DismissDirection
+import androidx.compose.material3.rememberDismissState
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.background
@@ -140,9 +141,9 @@ fun LedgerScreen(viewModel: LedgerViewModel = viewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(expenses, key = { it.id }) { expense ->
-                    val dismissState = rememberSwipeToDismissBoxState(
+                    val dismissState = rememberDismissState(
                         confirmValueChange = {
-                            if (it == SwipeToDismissBoxValue.EndToStart) {
+                            if (it == DismissValue.DismissedToStart) {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.deleteExpense(expense)
                                 true
@@ -165,10 +166,10 @@ fun LedgerScreen(viewModel: LedgerViewModel = viewModel()) {
                         } else expense.date
                     } else expense.date
 
-                    SwipeToDismissBox(
+                    SwipeToDismiss(
                         state = dismissState,
-                        enableDismissFromStartToEnd = false,
-                        backgroundContent = {
+                        directions = setOf(DismissDirection.EndToStart),
+                        background = {
                             Row(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -183,8 +184,8 @@ fun LedgerScreen(viewModel: LedgerViewModel = viewModel()) {
                                     tint = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
-                        }
-                    ) {
+                        },
+                        dismissContent = {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(

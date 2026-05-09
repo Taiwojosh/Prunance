@@ -38,9 +38,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.DismissValue
+import androidx.compose.material3.DismissDirection
+import androidx.compose.material3.rememberDismissState
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.background
@@ -335,9 +336,9 @@ private fun GoalsTab(
             val haptic = LocalHapticFeedback.current
             items(goals, key = { it.id }) { goal ->
                 val progress = if (goal.targetAmount > 0) (goal.currentAmount / goal.targetAmount).toFloat() else 0f
-                val dismissState = rememberSwipeToDismissBoxState(
+                val dismissState = rememberDismissState(
                     confirmValueChange = {
-                        if (it == SwipeToDismissBoxValue.EndToStart) {
+                        if (it == DismissValue.DismissedToStart) {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onDeleteGoal(goal)
                             true
@@ -345,10 +346,10 @@ private fun GoalsTab(
                     }
                 )
 
-                SwipeToDismissBox(
+                SwipeToDismiss(
                     state = dismissState,
-                    enableDismissFromStartToEnd = false,
-                    backgroundContent = {
+                    directions = setOf(DismissDirection.EndToStart),
+                    background = {
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -363,8 +364,8 @@ private fun GoalsTab(
                                 tint = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
-                    }
-                ) {
+                    },
+                    dismissContent = {
                     Card(
                     modifier = Modifier.fillMaxWidth().clickable { onAddFunds(goal) },
                     colors = CardDefaults.cardColors(
