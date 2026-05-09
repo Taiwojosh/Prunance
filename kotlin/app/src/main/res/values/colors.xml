@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0D47A1</color>
+    <!-- Launcher icon background -->
+    <color name="ic_launcher_background">#1A1A2E</color>
+
+    <!-- XML-level fallback colours (Compose handles theming at runtime,
+         but these are needed if any XML layout ever references a colour) -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="grey_200">#FFEEEEEE</color>
+    <color name="grey_900">#FF212121</color>
+    <color name="surface_light">#FFFFFFFF</color>
+    <color name="surface_dark">#FF1E1E1E</color>
 </resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme — clean, no ActionBar, white status bar -->
+    <style name="Theme.Prunance" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Status bar: white background, dark icons -->
+        <item name="android:statusBarColor">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- Navigation bar: white background, dark icons -->
+        <item name="android:navigationBarColor">@color/white</item>
+
+        <!-- Window background: pure white -->
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:colorBackground">@color/white</item>
+
+        <!-- No window title / action bar -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+    </style>
+</resources>

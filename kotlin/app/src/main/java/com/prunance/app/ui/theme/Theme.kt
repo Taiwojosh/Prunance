@@ -5,64 +5,77 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = BrandPrimary,
-    secondary = BrandSecondary,
-    tertiary = Pink80,
-    background = BackgroundDark,
-    surface = SurfaceDark,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+// ── Light scheme: white surface, dark text, zero colour noise ────────
+private val LightColorScheme = lightColorScheme(
+    primary        = BrandPrimary,
+    onPrimary      = Color.White,
+    secondary      = BrandSecondary,
+    onSecondary    = Color.White,
+    tertiary       = BrandAccent,
+    onTertiary     = Color.White,
+    background     = White,
+    onBackground   = Grey900,
+    surface        = White,
+    onSurface      = Grey900,
+    surfaceVariant = Grey100,
+    onSurfaceVariant = Grey600,
+    outline        = Grey200,
+    outlineVariant = Grey200,
+    error          = Error,
+    onError        = Color.White,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = BrandPrimary,
-    secondary = BrandSecondary,
-    tertiary = Pink40,
-    background = Color.White,
-    surface = Color(0xFFF1F5F9),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF0F172A),
-    onSurface = Color(0xFF0F172A),
+// ── Dark scheme: true dark surfaces, light text ──────────────────────
+private val DarkColorScheme = darkColorScheme(
+    primary        = BrandAccent,
+    onPrimary      = Color.White,
+    secondary      = BrandSecondary,
+    onSecondary    = Color.White,
+    tertiary       = BrandAccent,
+    onTertiary     = Color.White,
+    background     = DarkBackground,
+    onBackground   = Grey100,
+    surface        = DarkSurface,
+    onSurface      = Grey100,
+    surfaceVariant = DarkDivider,
+    onSurfaceVariant = Grey400,
+    outline        = DarkDivider,
+    outlineVariant = DarkDivider,
+    error          = Error,
+    onError        = Color.White,
 )
 
 @Composable
 fun PrunanceTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Disabled dynamic colour so the app always looks consistent
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+
+            // Status bar: match the surface colour (white in light, dark in dark)
+            window.statusBarColor = colorScheme.surface.toArgb()
+
+            // Navigation bar: match the surface colour too
+            window.navigationBarColor = colorScheme.surface.toArgb()
+
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            // Light status bar icons when dark theme, dark icons when light theme
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

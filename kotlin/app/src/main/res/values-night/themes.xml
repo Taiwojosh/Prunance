@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme variant — true dark surfaces -->
+    <style name="Theme.Prunance" parent="android:Theme.Material.NoActionBar">
+        <!-- Status bar: dark background, light icons -->
+        <item name="android:statusBarColor">@color/surface_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Navigation bar: dark background, light icons -->
+        <item name="android:navigationBarColor">@color/surface_dark</item>
+
+        <!-- Window background: true dark -->
+        <item name="android:windowBackground">@color/surface_dark</item>
+        <item name="android:colorBackground">@color/surface_dark</item>
+
+        <!-- No window title / action bar -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+    </style>
+</resources>
