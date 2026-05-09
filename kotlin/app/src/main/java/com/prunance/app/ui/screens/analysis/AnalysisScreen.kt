@@ -14,6 +14,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -120,7 +122,7 @@ fun AnalysisScreen(viewModel: AnalysisViewModel = viewModel()) {
                         Text(
                             text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.0f".format(totalSpent)}",
                             style = MaterialTheme.typography.headlineLarge,
-                            androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -150,7 +152,7 @@ fun AnalysisScreen(viewModel: AnalysisViewModel = viewModel()) {
                             Text(
                                 text = topCategory?.key ?: "N/A",
                                 style = MaterialTheme.typography.titleMedium,
-                                androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -181,7 +183,7 @@ fun AnalysisScreen(viewModel: AnalysisViewModel = viewModel()) {
                             Text(
                                 text = mostExpensiveDay?.key ?: "N/A",
                                 style = MaterialTheme.typography.titleMedium,
-                                androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -210,7 +212,7 @@ fun AnalysisScreen(viewModel: AnalysisViewModel = viewModel()) {
                             Text(
                                 text = "⚠️ Unusual Spikes Detected",
                                 style = MaterialTheme.typography.titleMedium,
-                                androidx.compose.ui.text.font.FontWeight.Bold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
                             Spacer(modifier = Modifier.height(8.dp))
