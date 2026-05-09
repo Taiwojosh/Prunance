@@ -38,6 +38,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Delete
 import com.prunance.app.data.local.entity.SavingsGoalEntity
 
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
@@ -325,10 +332,40 @@ private fun GoalsTab(
                 }
             }
 
-            items(goals) { goal ->
+            val haptic = LocalHapticFeedback.current
+            items(goals, key = { it.id }) { goal ->
                 val progress = if (goal.targetAmount > 0) (goal.currentAmount / goal.targetAmount).toFloat() else 0f
-                
-                Card(
+                val dismissState = rememberSwipeToDismissBoxState(
+                    confirmValueChange = {
+                        if (it == SwipeToDismissBoxValue.EndToStart) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onDeleteGoal(goal)
+                            true
+                        } else false
+                    }
+                )
+
+                SwipeToDismissBox(
+                    state = dismissState,
+                    enableDismissFromStartToEnd = false,
+                    backgroundContent = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
+                                .padding(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+                ) {
+                    Card(
                     modifier = Modifier.fillMaxWidth().clickable { onAddFunds(goal) },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -373,14 +410,31 @@ private fun GoalsTab(
 
                         if (goal.deadline.isNotBlank() && goal.deadline != "No deadline") {
                             Spacer(modifier = Modifier.height(12.dp))
+                            
+                            val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                            val parsedDate = try { format.parse(goal.deadline) } catch(e: Exception) { null }
+                            val displayDate = if (parsedDate != null) {
+                                val today = java.util.Calendar.getInstance()
+                                val itemCal = java.util.Calendar.getInstance().apply { time = parsedDate }
+                                val diff = today.get(java.util.Calendar.DAY_OF_YEAR) - itemCal.get(java.util.Calendar.DAY_OF_YEAR)
+                                if (today.get(java.util.Calendar.YEAR) == itemCal.get(java.util.Calendar.YEAR)) {
+                                    when (diff) {
+                                        0 -> "Today"
+                                        1 -> "Yesterday"
+                                        else -> goal.deadline
+                                    }
+                                } else goal.deadline
+                            } else goal.deadline
+                            
                             Text(
-                                text = "Target Date: ${goal.deadline}",
+                                text = "Target Date: $displayDate",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
+            }
             }
         }
     }

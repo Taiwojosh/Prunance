@@ -29,6 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Delete
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.prunance.app.models.Category
@@ -41,6 +48,7 @@ fun LedgerScreen(viewModel: LedgerViewModel = viewModel()) {
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
     val privacyMode by viewModel.privacyMode.collectAsStateWithLifecycle(initialValue = false)
     val currency by viewModel.currency.collectAsStateWithLifecycle(initialValue = "NGN")
+    val haptic = LocalHapticFeedback.current
 
     val currencySymbol = when (currency) {
         "NGN" -> "₦"
@@ -132,39 +140,85 @@ fun LedgerScreen(viewModel: LedgerViewModel = viewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(expenses, key = { it.id }) { expense ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = expense.notes.ifBlank { expense.category },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "${expense.category} · ${expense.date}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = {
+                            if (it == SwipeToDismissBoxValue.EndToStart) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.deleteExpense(expense)
+                                true
+                            } else false
+                        }
+                    )
+
+                    val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    val parsedDate = try { format.parse(expense.date) } catch(e: Exception) { null }
+                    val displayDate = if (parsedDate != null) {
+                        val today = java.util.Calendar.getInstance()
+                        val itemCal = java.util.Calendar.getInstance().apply { time = parsedDate }
+                        val diff = today.get(java.util.Calendar.DAY_OF_YEAR) - itemCal.get(java.util.Calendar.DAY_OF_YEAR)
+                        if (today.get(java.util.Calendar.YEAR) == itemCal.get(java.util.Calendar.YEAR)) {
+                            when (diff) {
+                                0 -> "Today"
+                                1 -> "Yesterday"
+                                else -> expense.date
+                            }
+                        } else expense.date
+                    } else expense.date
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        enableDismissFromStartToEnd = false,
+                        backgroundContent = {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
+                                    .padding(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.2f".format(expense.amount)}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                        }
+                    ) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = expense.notes.ifBlank { expense.category },
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "${expense.category} · $displayDate",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.2f".format(expense.amount)}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                 }
