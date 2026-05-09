@@ -24,6 +24,8 @@ class FinanceRepository(context: Context) {
 
     fun getAllExpenses(): Flow<List<ExpenseEntity>> = expenseDao.getAllExpenses()
 
+    fun getRecentExpenses(limit: Int): Flow<List<ExpenseEntity>> = expenseDao.getRecentExpenses(limit)
+
     fun getExpensesByCategory(category: String): Flow<List<ExpenseEntity>> =
         expenseDao.getExpensesByCategory(category)
 

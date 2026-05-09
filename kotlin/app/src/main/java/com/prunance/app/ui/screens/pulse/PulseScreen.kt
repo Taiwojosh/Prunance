@@ -14,6 +14,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +37,8 @@ fun PulseScreen(viewModel: PulseViewModel = viewModel()) {
     val privacyMode by viewModel.privacyMode.collectAsStateWithLifecycle(initialValue = false)
     val unpaidBills by viewModel.unpaidBillsTotal.collectAsStateWithLifecycle(initialValue = 0.0)
     val activeGoals by viewModel.activeGoalCount.collectAsStateWithLifecycle(initialValue = 0)
+    val currentMonthSpent by viewModel.currentMonthSpent.collectAsStateWithLifecycle(initialValue = 0.0)
+    val recentTransactions by viewModel.recentTransactions.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val currencySymbol = when (currency) {
         "NGN" -> "₦"
@@ -46,17 +54,32 @@ fun PulseScreen(viewModel: PulseViewModel = viewModel()) {
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         // ── Header ────────────────────────────────────────────────
-        Text(
-            text = if (userName.isNotBlank()) "Hello, $userName" else "Welcome",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Your financial pulse",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (userName.isNotBlank()) "Hello, $userName" else "Welcome",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Your financial pulse",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(onClick = { viewModel.togglePrivacyMode(privacyMode) }) {
+                Icon(
+                    imageVector = if (privacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    contentDescription = "Toggle Privacy",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -104,30 +127,92 @@ fun PulseScreen(viewModel: PulseViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // ── System Health placeholder ─────────────────────────────
+        // ── System Health ─────────────────────────────────────────
+        val healthRatio = if (monthlyIncome > 0) currentMonthSpent / monthlyIncome else 0.0
+        val isHealthy = healthRatio < 0.9
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = if (isHealthy) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.errorContainer
             )
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.padding(20.dp).fillMaxWidth()) {
                 Text(
                     text = "System Health",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isHealthy) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Set up your budget to see health metrics",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        text = if (isHealthy) "Optimal" else "Critical",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isHealthy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = if (privacyMode) "••••" else "${(healthRatio * 100).toInt()}% utilized",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isHealthy) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    progress = healthRatio.coerceIn(0.0, 1.0).toFloat(),
+                    modifier = Modifier.fillMaxWidth().height(8.dp),
+                    color = if (isHealthy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    trackColor = if (isHealthy) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.3f)
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ── Recent Transactions ───────────────────────────────────
+        if (recentTransactions.isNotEmpty()) {
+            Text(
+                text = "Recent Logs",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                recentTransactions.forEach { tx ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = tx.category,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = tx.date,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Text(
+                                text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.0f".format(tx.amount)}",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
             }
         }
     }
