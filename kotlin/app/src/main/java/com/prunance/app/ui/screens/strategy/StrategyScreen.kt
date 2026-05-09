@@ -366,77 +366,77 @@ private fun GoalsTab(
                         }
                     },
                     dismissContent = {
-                    Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onAddFunds(goal) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Card(
+                            modifier = Modifier.fillMaxWidth().clickable { onAddFunds(goal) },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         ) {
-                            Text(
-                                text = goal.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (privacyMode) "••••" else "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = goal.name,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (privacyMode) "••••" else "${(progress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(
-                            text = if (privacyMode) "$currencySymbol •••• / $currencySymbol ••••"
-                            else "$currencySymbol ${"%,.0f".format(goal.currentAmount)} / $currencySymbol ${"%,.0f".format(goal.targetAmount)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                                Text(
+                                    text = if (privacyMode) "$currencySymbol •••• / $currencySymbol ••••"
+                                    else "$currencySymbol ${"%,.0f".format(goal.currentAmount)} / $currencySymbol ${"%,.0f".format(goal.targetAmount)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                        LinearProgressIndicator(
-                            progress = progress.coerceIn(0f, 1f),
-                            modifier = Modifier.fillMaxWidth().height(8.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.outlineVariant
-                        )
+                                LinearProgressIndicator(
+                                    progress = progress.coerceIn(0f, 1f),
+                                    modifier = Modifier.fillMaxWidth().height(8.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.outlineVariant
+                                )
 
-                        if (goal.deadline.isNotBlank() && goal.deadline != "No deadline") {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            
-                            val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                            val parsedDate = try { format.parse(goal.deadline) } catch(e: Exception) { null }
-                            val displayDate = if (parsedDate != null) {
-                                val today = java.util.Calendar.getInstance()
-                                val itemCal = java.util.Calendar.getInstance().apply { time = parsedDate }
-                                val diff = today.get(java.util.Calendar.DAY_OF_YEAR) - itemCal.get(java.util.Calendar.DAY_OF_YEAR)
-                                if (today.get(java.util.Calendar.YEAR) == itemCal.get(java.util.Calendar.YEAR)) {
-                                    when (diff) {
-                                        0 -> "Today"
-                                        1 -> "Yesterday"
-                                        else -> goal.deadline
-                                    }
-                                } else goal.deadline
-                            } else goal.deadline
-                            
-                            Text(
-                                text = "Target Date: $displayDate",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                                if (goal.deadline.isNotBlank() && goal.deadline != "No deadline") {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                    val parsedDate = try { format.parse(goal.deadline) } catch(e: Exception) { null }
+                                    val displayDate = if (parsedDate != null) {
+                                        val today = java.util.Calendar.getInstance()
+                                        val itemCal = java.util.Calendar.getInstance().apply { time = parsedDate }
+                                        val diff = today.get(java.util.Calendar.DAY_OF_YEAR) - itemCal.get(java.util.Calendar.DAY_OF_YEAR)
+                                        if (today.get(java.util.Calendar.YEAR) == itemCal.get(java.util.Calendar.YEAR)) {
+                                            when (diff) {
+                                                0 -> "Today"
+                                                1 -> "Yesterday"
+                                                else -> goal.deadline
+                                            }
+                                        } else goal.deadline
+                                    } else goal.deadline
+                                    
+                                    Text(
+                                        text = "Target Date: $displayDate",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
-                }
-            )
-        }
+                )
             }
         }
     }
