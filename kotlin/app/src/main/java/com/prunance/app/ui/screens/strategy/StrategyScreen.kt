@@ -434,8 +434,9 @@ private fun GoalsTab(
                             )
                         }
                     }
-                )
-            }
+                }
+            )
+        }
             }
         }
     }

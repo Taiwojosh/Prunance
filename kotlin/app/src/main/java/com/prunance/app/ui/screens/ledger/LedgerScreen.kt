@@ -221,8 +221,9 @@ fun LedgerScreen(viewModel: LedgerViewModel = viewModel()) {
                                 )
                             }
                         }
-                    )
-                }
+                    }
+                )
+            }
             }
         }
     }
