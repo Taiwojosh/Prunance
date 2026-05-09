@@ -49,6 +49,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.Delete
 import com.prunance.app.data.local.entity.SavingsGoalEntity
+import com.prunance.app.data.local.entity.BillEntity
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
 
@@ -65,8 +68,10 @@ fun StrategyScreen(
     val budgetSplits by viewModel.budgetSplits.collectAsStateWithLifecycle(initialValue = emptyMap())
     val currentExpenses by viewModel.currentMonthExpenses.collectAsStateWithLifecycle(initialValue = emptyList())
     val goals by viewModel.goals.collectAsStateWithLifecycle(initialValue = emptyList())
+    val bills by viewModel.bills.collectAsStateWithLifecycle(initialValue = emptyList())
 
     var showAddGoalSheet by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var showAddBillSheet by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     var selectedGoalForFunds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.prunance.app.data.local.entity.SavingsGoalEntity?>(null) }
 
     val currencySymbol = when (currency) {
@@ -121,7 +126,14 @@ fun StrategyScreen(
                 currencySymbol = currencySymbol,
                 privacyMode = privacyMode
             )
-            1 -> BillsTab()
+            1 -> BillsTab(
+                bills = bills,
+                currencySymbol = currencySymbol,
+                privacyMode = privacyMode,
+                onCreateBill = { showAddBillSheet = true },
+                onToggleBillPaid = viewModel::toggleBillPaid,
+                onDeleteBill = viewModel::deleteBill
+            )
             2 -> GoalsTab(
                 goals = goals,
                 currencySymbol = currencySymbol,
@@ -139,6 +151,14 @@ fun StrategyScreen(
             currencySymbol = currencySymbol,
             onDismiss = { showAddGoalSheet = false },
             onSave = { viewModel.addGoal(it) }
+        )
+    }
+
+    if (showAddBillSheet) {
+        com.prunance.app.ui.components.AddBillSheet(
+            currencySymbol = currencySymbol,
+            onDismiss = { showAddBillSheet = false },
+            onSave = { viewModel.addBill(it) }
         )
     }
 
@@ -282,12 +302,142 @@ private fun BudgetTab(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BillsTab() {
-    PlaceholderContent(
-        title = "Obligations",
-        subtitle = "Manage recurring bills and subscription decay"
-    )
+private fun BillsTab(
+    bills: List<BillEntity>,
+    currencySymbol: String,
+    privacyMode: Boolean,
+    onCreateBill: () -> Unit,
+    onToggleBillPaid: (BillEntity) -> Unit,
+    onDeleteBill: (BillEntity) -> Unit
+) {
+    if (bills.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            PlaceholderContent(
+                title = "No Obligations",
+                subtitle = "Manage recurring bills and subscription decay"
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onCreateBill) {
+                Text("Add Bill")
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Your Obligations",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Button(onClick = onCreateBill) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Bill", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("New Bill")
+                    }
+                }
+            }
+
+            items(bills, key = { it.id }) { bill ->
+                val haptic = LocalHapticFeedback.current
+                val dismissState = rememberDismissState(
+                    confirmValueChange = {
+                        if (it == DismissValue.DismissedToStart) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onDeleteBill(bill)
+                            true
+                        } else false
+                    }
+                )
+
+                SwipeToDismiss(
+                    state = dismissState,
+                    directions = setOf(DismissDirection.EndToStart),
+                    background = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
+                                .padding(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    },
+                    dismissContent = {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = bill.isPaid,
+                                    onCheckedChange = { 
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        onToggleBillPaid(bill) 
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = MaterialTheme.colorScheme.primary,
+                                        uncheckedColor = MaterialTheme.colorScheme.outline
+                                    )
+                                )
+                                
+                                Spacer(modifier = Modifier.width(12.dp))
+                                
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = bill.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (bill.isPaid) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Due: ${bill.dueDate} • ${bill.frequency}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                
+                                Text(
+                                    text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.0f".format(bill.amount)}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (bill.isPaid) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

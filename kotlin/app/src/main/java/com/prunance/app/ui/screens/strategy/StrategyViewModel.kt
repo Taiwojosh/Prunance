@@ -54,6 +54,14 @@ class StrategyViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { repository.addBill(bill) }
     }
 
+    fun updateBill(bill: BillEntity) {
+        viewModelScope.launch { repository.updateBill(bill) }
+    }
+
+    fun toggleBillPaid(bill: BillEntity) {
+        viewModelScope.launch { repository.updateBill(bill.copy(isPaid = !bill.isPaid)) }
+    }
+
     fun deleteBill(bill: BillEntity) {
         viewModelScope.launch { repository.deleteBill(bill) }
     }
