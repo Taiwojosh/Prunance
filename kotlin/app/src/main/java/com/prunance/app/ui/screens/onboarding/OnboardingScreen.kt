@@ -249,7 +249,7 @@ private fun IncomeStep(
             onValueChange = onIncomeChanged,
             placeholder = { Text("e.g. 300000") },
             singleLine = true,
-            keyboardType = KeyboardOptions(keyboardType = KeyboardType.Number).keyboardType,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -267,7 +267,7 @@ private fun IncomeStep(
             onValueChange = onPaydayChanged,
             placeholder = { Text("Day of month (1-31)") },
             singleLine = true,
-            keyboardType = KeyboardOptions(keyboardType = KeyboardType.Number).keyboardType,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
     }
