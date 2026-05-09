@@ -20,6 +20,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,7 +31,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun PulseScreen(viewModel: PulseViewModel = viewModel()) {
+fun PulseScreen(
+    onNavigateToSettings: () -> Unit = {},
+    viewModel: PulseViewModel = viewModel()
+) {
     val userName by viewModel.userName.collectAsStateWithLifecycle(initialValue = "")
     val monthlyIncome by viewModel.monthlyIncome.collectAsStateWithLifecycle(initialValue = 0.0)
     val currency by viewModel.currency.collectAsStateWithLifecycle(initialValue = "NGN")
@@ -72,12 +76,21 @@ fun PulseScreen(viewModel: PulseViewModel = viewModel()) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = { viewModel.togglePrivacyMode(privacyMode) }) {
-                Icon(
-                    imageVector = if (privacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = "Toggle Privacy",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { viewModel.togglePrivacyMode(privacyMode) }) {
+                    Icon(
+                        imageVector = if (privacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = "Toggle Privacy",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onNavigateToSettings) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 

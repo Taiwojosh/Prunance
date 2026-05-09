@@ -15,6 +15,9 @@ interface SavingsGoalDao {
     @Query("SELECT * FROM savings_goals ORDER BY deadline ASC")
     fun getAllGoals(): Flow<List<SavingsGoalEntity>>
 
+    @Query("SELECT * FROM savings_goals WHERE id = :id")
+    fun getGoalById(id: String): Flow<SavingsGoalEntity?>
+
     @Query("SELECT COUNT(*) FROM savings_goals WHERE currentAmount < targetAmount")
     fun getActiveGoalCount(): Flow<Int>
 

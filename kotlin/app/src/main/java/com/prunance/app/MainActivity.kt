@@ -125,10 +125,29 @@ fun PrunanceApp() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            composable(BottomNavItem.Pulse.route) { PulseScreen() }
+            composable(BottomNavItem.Pulse.route) { 
+                PulseScreen(onNavigateToSettings = { navController.navigate("settings") }) 
+            }
             composable(BottomNavItem.Ledger.route) { LedgerScreen() }
-            composable(BottomNavItem.Strategy.route) { StrategyScreen() }
+            composable(BottomNavItem.Strategy.route) { 
+                StrategyScreen(onNavigateToGoalDetail = { goalId -> navController.navigate("goal_detail/$goalId") }) 
+            }
             composable(BottomNavItem.Analysis.route) { AnalysisScreen() }
+            composable("settings") { 
+                com.prunance.app.ui.screens.settings.SettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("goal_detail/{goalId}") { backStackEntry ->
+                val goalId = backStackEntry.arguments?.getString("goalId") ?: return@composable
+                val goalViewModel = remember { 
+                    com.prunance.app.ui.screens.goals.GoalDetailViewModel(repository, goalId) 
+                }
+                com.prunance.app.ui.screens.goals.GoalDetailScreen(
+                    viewModel = goalViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 

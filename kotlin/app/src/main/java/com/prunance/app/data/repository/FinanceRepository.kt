@@ -60,6 +60,7 @@ class FinanceRepository(context: Context) {
     // ── Savings Goals ─────────────────────────────────────────────────
 
     fun getAllGoals(): Flow<List<SavingsGoalEntity>> = savingsGoalDao.getAllGoals()
+    fun getGoalById(id: String): Flow<SavingsGoalEntity?> = savingsGoalDao.getGoalById(id)
     fun getActiveGoalCount(): Flow<Int> = savingsGoalDao.getActiveGoalCount()
     fun getTotalSaved(): Flow<Double?> = savingsGoalDao.getTotalSaved()
 
@@ -67,4 +68,8 @@ class FinanceRepository(context: Context) {
     suspend fun updateGoal(goal: SavingsGoalEntity) = savingsGoalDao.updateGoal(goal)
     suspend fun deleteGoal(goal: SavingsGoalEntity) = savingsGoalDao.deleteGoal(goal)
     suspend fun deleteGoalById(id: String) = savingsGoalDao.deleteGoalById(id)
+
+    suspend fun clearAllData() {
+        db.clearAllTables()
+    }
 }

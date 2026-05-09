@@ -51,7 +51,10 @@ import com.prunance.app.data.local.entity.SavingsGoalEntity
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
 
 @Composable
-fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
+fun StrategyScreen(
+    onNavigateToGoalDetail: (String) -> Unit = {},
+    viewModel: StrategyViewModel = viewModel()
+) {
     val activeTab by viewModel.activeTab.collectAsStateWithLifecycle()
     val currency by viewModel.currency.collectAsStateWithLifecycle(initialValue = "NGN")
     val privacyMode by viewModel.privacyMode.collectAsStateWithLifecycle(initialValue = false)
@@ -122,7 +125,8 @@ fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
                 privacyMode = privacyMode,
                 onCreateGoal = { showAddGoalSheet = true },
                 onAddFunds = { selectedGoalForFunds = it },
-                onDeleteGoal = viewModel::deleteGoal
+                onDeleteGoal = viewModel::deleteGoal,
+                onNavigateToGoalDetail = onNavigateToGoalDetail
             )
         }
     }
@@ -290,7 +294,8 @@ private fun GoalsTab(
     privacyMode: Boolean,
     onCreateGoal: () -> Unit,
     onAddFunds: (SavingsGoalEntity) -> Unit,
-    onDeleteGoal: (SavingsGoalEntity) -> Unit
+    onDeleteGoal: (SavingsGoalEntity) -> Unit,
+    onNavigateToGoalDetail: (String) -> Unit
 ) {
     if (goals.isEmpty()) {
         Column(
@@ -367,7 +372,7 @@ private fun GoalsTab(
                     },
                     dismissContent = {
                         Card(
-                            modifier = Modifier.fillMaxWidth().clickable { onAddFunds(goal) },
+                            modifier = Modifier.fillMaxWidth().clickable { onNavigateToGoalDetail(goal.id) },
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
