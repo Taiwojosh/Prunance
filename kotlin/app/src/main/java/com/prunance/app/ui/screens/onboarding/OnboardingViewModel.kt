@@ -84,7 +84,8 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
                 monthlyIncome = income,
                 payday = day,
                 currency = _currency.value,
-                lowBalanceThreshold = income * 0.1 // Default: 10% of income
+                lowBalanceThreshold = income * 0.1, // Default: 10% of income
+                budgetSplitsMap = _budgetSplits.value
             )
 
             onComplete()

@@ -19,11 +19,34 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.text.font.FontWeight
+import com.prunance.app.data.local.entity.ExpenseEntity
+import java.util.Calendar
+
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
 
 @Composable
 fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
     val activeTab by viewModel.activeTab.collectAsStateWithLifecycle()
+    val currency by viewModel.currency.collectAsStateWithLifecycle(initialValue = "NGN")
+    val privacyMode by viewModel.privacyMode.collectAsStateWithLifecycle(initialValue = false)
+    val monthlyIncome by viewModel.monthlyIncome.collectAsStateWithLifecycle(initialValue = 0.0)
+    val budgetSplits by viewModel.budgetSplits.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val currentExpenses by viewModel.currentMonthExpenses.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val currencySymbol = when (currency) {
+        "NGN" -> "₦"
+        "USD" -> "$"
+        "EUR" -> "€"
+        else -> currency
+    }
 
     Column(
         modifier = Modifier
@@ -63,7 +86,13 @@ fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
 
         // ── Tab Content ───────────────────────────────────────────
         when (activeTab) {
-            0 -> BudgetTab()
+            0 -> BudgetTab(
+                monthlyIncome = monthlyIncome,
+                budgetSplits = budgetSplits,
+                expenses = currentExpenses,
+                currencySymbol = currencySymbol,
+                privacyMode = privacyMode
+            )
             1 -> BillsTab()
             2 -> GoalsTab()
         }
@@ -71,11 +100,130 @@ fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
 }
 
 @Composable
-private fun BudgetTab() {
-    PlaceholderContent(
-        title = "Budget Protocol",
-        subtitle = "Set spending limits per category to track deployment efficiency"
-    )
+private fun BudgetTab(
+    monthlyIncome: Double,
+    budgetSplits: Map<String, Int>,
+    expenses: List<ExpenseEntity>,
+    currencySymbol: String,
+    privacyMode: Boolean
+) {
+    val calendar = Calendar.getInstance()
+    val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
+    val daysRemaining = (daysInMonth - currentDay).coerceAtLeast(1)
+
+    val totalBudgeted = monthlyIncome * (budgetSplits.values.sum() / 100.0)
+    val totalSpent = expenses.sumOf { it.amount }
+    val overallProgress = if (totalBudgeted > 0) (totalSpent / totalBudgeted).toFloat() else 0f
+
+    LazyColumn(
+        contentPadding = PaddingValues(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Overall Budget Summary
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Monthly Budget",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (privacyMode) "$currencySymbol •••• of $currencySymbol •••• left"
+                        else "$currencySymbol ${"%,.0f".format((totalBudgeted - totalSpent).coerceAtLeast(0.0))} of $currencySymbol ${"%,.0f".format(totalBudgeted)} left",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        progress = overallProgress.coerceIn(0f, 1f),
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
+                        color = if (overallProgress > 0.85f) MaterialTheme.colorScheme.error 
+                                else if (overallProgress > 0.60f) MaterialTheme.colorScheme.tertiary 
+                                else MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+            }
+        }
+
+        // Category Cards
+        items(budgetSplits.entries.toList()) { (category, percent) ->
+            val limit = monthlyIncome * (percent / 100.0)
+            if (limit > 0) {
+                val spent = expenses.filter { it.category == category }.sumOf { it.amount }
+                val progress = (spent / limit).toFloat()
+                val remaining = limit - spent
+                val dailyAllowance = remaining / daysRemaining
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (privacyMode) "••••" else "${(progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = if (privacyMode) "$currencySymbol •••• / $currencySymbol ••••"
+                            else "$currencySymbol ${"%,.0f".format(spent)} / $currencySymbol ${"%,.0f".format(limit)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        LinearProgressIndicator(
+                            progress = progress.coerceIn(0f, 1f),
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = if (progress > 0.85f) MaterialTheme.colorScheme.error 
+                                    else if (progress > 0.60f) MaterialTheme.colorScheme.tertiary 
+                                    else MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Text(
+                            text = if (remaining < 0) "⚠️ Over budget by $currencySymbol ${"%,.0f".format(-remaining)}"
+                                   else if (privacyMode) "~$currencySymbol ••••/day for $daysRemaining days"
+                                   else "~$currencySymbol ${"%,.0f".format(dailyAllowance)}/day for $daysRemaining days",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (remaining < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

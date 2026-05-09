@@ -30,6 +30,7 @@ class UserPreferences(private val context: Context) {
         val KEY_PRIVACY_LOCK = stringPreferencesKey("privacy_lock")
         val KEY_HAS_SEEN_TOUR = booleanPreferencesKey("has_seen_tour")
         val KEY_HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
+        val KEY_BUDGET_SPLITS = stringPreferencesKey("budget_splits")
     }
 
     // ── Read flows ────────────────────────────────────────────────────
@@ -42,6 +43,16 @@ class UserPreferences(private val context: Context) {
     val privacyMode: Flow<Boolean> = context.dataStore.data.map { it[KEY_PRIVACY_MODE] ?: false }
     val hasCompletedOnboarding: Flow<Boolean> = context.dataStore.data.map { it[KEY_HAS_COMPLETED_ONBOARDING] ?: false }
 
+    val budgetSplits: Flow<Map<String, Int>> = context.dataStore.data.map { prefs ->
+        val splitsString = prefs[KEY_BUDGET_SPLITS] ?: "Food:30,Transport:15,Shopping:10,Entertainment:5,Health:5,Bills:25,Other:10"
+        splitsString.split(",")
+            .filter { it.isNotBlank() }
+            .associate {
+                val parts = it.split(":")
+                parts[0] to (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+            }
+    }
+
     // ── Write operations ──────────────────────────────────────────────
 
     suspend fun saveProfile(
@@ -49,7 +60,8 @@ class UserPreferences(private val context: Context) {
         monthlyIncome: Double,
         payday: Int,
         currency: String,
-        lowBalanceThreshold: Double
+        lowBalanceThreshold: Double,
+        budgetSplitsMap: Map<String, Int>
     ) {
         context.dataStore.edit { prefs ->
             prefs[KEY_NAME] = name
@@ -58,6 +70,7 @@ class UserPreferences(private val context: Context) {
             prefs[KEY_CURRENCY] = currency
             prefs[KEY_LOW_BALANCE_THRESHOLD] = lowBalanceThreshold
             prefs[KEY_HAS_COMPLETED_ONBOARDING] = true
+            prefs[KEY_BUDGET_SPLITS] = budgetSplitsMap.entries.joinToString(",") { "${it.key}:${it.value}" }
         }
     }
 

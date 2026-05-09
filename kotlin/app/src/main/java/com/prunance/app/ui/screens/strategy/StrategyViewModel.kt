@@ -22,6 +22,27 @@ class StrategyViewModel(application: Application) : AndroidViewModel(application
     private val _activeTab = MutableStateFlow(0)
     val activeTab: StateFlow<Int> = _activeTab
 
+    val monthlyIncome: Flow<Double> = repository.prefs.monthlyIncome
+    val budgetSplits: Flow<Map<String, Int>> = repository.prefs.budgetSplits
+
+    // Get the current month's start and end dates for expense filtering
+    private val currentMonthStart: String
+    private val currentMonthEnd: String
+    
+    init {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        currentMonthStart = format.format(calendar.time)
+        
+        calendar.add(java.util.Calendar.MONTH, 1)
+        calendar.add(java.util.Calendar.DAY_OF_MONTH, -1)
+        currentMonthEnd = format.format(calendar.time)
+    }
+
+    val currentMonthExpenses: Flow<List<com.prunance.app.data.local.entity.ExpenseEntity>> = 
+        repository.getExpensesBetweenDates(currentMonthStart, currentMonthEnd)
+
     val bills: Flow<List<BillEntity>> = repository.getAllBills()
     val goals: Flow<List<SavingsGoalEntity>> = repository.getAllGoals()
 
