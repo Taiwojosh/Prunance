@@ -62,6 +62,10 @@ class StrategyViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { repository.addGoal(goal) }
     }
 
+    fun updateGoal(goal: SavingsGoalEntity) {
+        viewModelScope.launch { repository.updateGoal(goal) }
+    }
+
     fun deleteGoal(goal: SavingsGoalEntity) {
         viewModelScope.launch { repository.deleteGoal(goal) }
     }

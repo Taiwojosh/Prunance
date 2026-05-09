@@ -29,6 +29,15 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.text.font.FontWeight
 import com.prunance.app.data.local.entity.ExpenseEntity
 import java.util.Calendar
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import com.prunance.app.data.local.entity.SavingsGoalEntity
 
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
 
@@ -40,6 +49,10 @@ fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
     val monthlyIncome by viewModel.monthlyIncome.collectAsStateWithLifecycle(initialValue = 0.0)
     val budgetSplits by viewModel.budgetSplits.collectAsStateWithLifecycle(initialValue = emptyMap())
     val currentExpenses by viewModel.currentMonthExpenses.collectAsStateWithLifecycle(initialValue = emptyList())
+    val goals by viewModel.goals.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    var showAddGoalSheet by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var selectedGoalForFunds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.prunance.app.data.local.entity.SavingsGoalEntity?>(null) }
 
     val currencySymbol = when (currency) {
         "NGN" -> "₦"
@@ -94,8 +107,35 @@ fun StrategyScreen(viewModel: StrategyViewModel = viewModel()) {
                 privacyMode = privacyMode
             )
             1 -> BillsTab()
-            2 -> GoalsTab()
+            2 -> GoalsTab(
+                goals = goals,
+                currencySymbol = currencySymbol,
+                privacyMode = privacyMode,
+                onCreateGoal = { showAddGoalSheet = true },
+                onAddFunds = { selectedGoalForFunds = it },
+                onDeleteGoal = viewModel::deleteGoal
+            )
         }
+    }
+
+    if (showAddGoalSheet) {
+        com.prunance.app.ui.components.AddGoalSheet(
+            currencySymbol = currencySymbol,
+            onDismiss = { showAddGoalSheet = false },
+            onSave = { viewModel.addGoal(it) }
+        )
+    }
+
+    selectedGoalForFunds?.let { goal ->
+        com.prunance.app.ui.components.AddFundsSheet(
+            currencySymbol = currencySymbol,
+            goalName = goal.name,
+            onDismiss = { selectedGoalForFunds = null },
+            onSave = { amount ->
+                val newAmount = goal.currentAmount + amount
+                viewModel.updateGoal(goal.copy(currentAmount = newAmount))
+            }
+        )
     }
 }
 
@@ -235,11 +275,114 @@ private fun BillsTab() {
 }
 
 @Composable
-private fun GoalsTab() {
-    PlaceholderContent(
-        title = "Aspirations",
-        subtitle = "Set long-term capital accumulation targets"
-    )
+private fun GoalsTab(
+    goals: List<SavingsGoalEntity>,
+    currencySymbol: String,
+    privacyMode: Boolean,
+    onCreateGoal: () -> Unit,
+    onAddFunds: (SavingsGoalEntity) -> Unit,
+    onDeleteGoal: (SavingsGoalEntity) -> Unit
+) {
+    if (goals.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            PlaceholderContent(
+                title = "No Active Aspirations",
+                subtitle = "Set long-term capital accumulation targets"
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = onCreateGoal) {
+                Text("Create Goal")
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Your Targets",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Button(onClick = onCreateGoal) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Goal", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("New Goal")
+                    }
+                }
+            }
+
+            items(goals) { goal ->
+                val progress = if (goal.targetAmount > 0) (goal.currentAmount / goal.targetAmount).toFloat() else 0f
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth().clickable { onAddFunds(goal) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = goal.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (privacyMode) "••••" else "${(progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = if (privacyMode) "$currencySymbol •••• / $currencySymbol ••••"
+                            else "$currencySymbol ${"%,.0f".format(goal.currentAmount)} / $currencySymbol ${"%,.0f".format(goal.targetAmount)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        LinearProgressIndicator(
+                            progress = progress.coerceIn(0f, 1f),
+                            modifier = Modifier.fillMaxWidth().height(8.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        if (goal.deadline.isNotBlank() && goal.deadline != "No deadline") {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Target Date: ${goal.deadline}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
