@@ -37,7 +37,7 @@ class PulseViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun togglePrivacyMode(currentMode: Boolean) {
-        androidx.lifecycle.viewModelScope.launch {
+        viewModelScope.launch {
             repository.prefs.setPrivacyMode(!currentMode)
         }
     }
