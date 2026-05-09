@@ -2,15 +2,17 @@ package com.prunance.app.ui.screens.analysis
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 private val periodLabels = listOf("Week", "Month", "Quarter")
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalysisScreen(viewModel: AnalysisViewModel = viewModel()) {
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
@@ -42,22 +45,16 @@ fun AnalysisScreen(viewModel: AnalysisViewModel = viewModel()) {
         Spacer(modifier = Modifier.height(12.dp))
 
         // ── Period Selector ───────────────────────────────────────
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            periodLabels.forEachIndexed { index, label ->
-                SegmentedButton(
+            itemsIndexed(periodLabels) { index, label ->
+                FilterChip(
                     selected = selectedPeriod == index,
                     onClick = { viewModel.onPeriodChanged(index) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = periodLabels.size
-                    )
-                ) {
-                    Text(label)
-                }
+                    label = { Text(label) }
+                )
             }
         }
 
