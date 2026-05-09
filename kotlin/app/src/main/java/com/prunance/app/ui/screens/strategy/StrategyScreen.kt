@@ -1,5 +1,7 @@
 package com.prunance.app.ui.screens.strategy
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -50,6 +52,7 @@ import com.prunance.app.data.local.entity.SavingsGoalEntity
 
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StrategyScreen(
     onNavigateToGoalDetail: (String) -> Unit = {},
@@ -287,6 +290,7 @@ private fun BillsTab() {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GoalsTab(
     goals: List<SavingsGoalEntity>,
@@ -337,9 +341,8 @@ private fun GoalsTab(
                     }
                 }
             }
-
-            val haptic = LocalHapticFeedback.current
             items(goals, key = { it.id }) { goal ->
+                val haptic = LocalHapticFeedback.current
                 val progress = if (goal.targetAmount > 0) (goal.currentAmount / goal.targetAmount).toFloat() else 0f
                 val dismissState = rememberDismissState(
                     confirmValueChange = {
