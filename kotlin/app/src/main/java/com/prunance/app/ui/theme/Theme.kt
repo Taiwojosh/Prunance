@@ -1,87 +1,107 @@
 package com.prunance.app.ui.theme
 
 import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// ── Light scheme: white surface, dark text, zero colour noise ────────
-private val LightColorScheme = lightColorScheme(
-    primary        = BrandPrimary,
-    onPrimary      = Color.White,
-    secondary      = BrandSecondary,
-    onSecondary    = Color.White,
-    tertiary       = BrandAccent,
-    onTertiary     = Color.White,
-    background     = White,
-    onBackground   = Grey900,
-    surface        = White,
-    onSurface      = Grey900,
-    surfaceVariant = Grey100,
-    onSurfaceVariant = Grey600,
-    outline        = Grey200,
-    outlineVariant = Grey200,
-    error          = Error,
-    onError        = Color.White,
+@Stable
+class PrunanceColors(
+    background: Color,
+    surface: Color,
+    surfaceGlass: Color,
+    primary: Color,
+    onPrimary: Color,
+    secondary: Color,
+    textPrimary: Color,
+    textSecondary: Color,
+    success: Color,
+    warning: Color,
+    error: Color,
+    outline: Color,
+    outlineGlass: Color
+) {
+    var background by mutableStateOf(background)
+        internal set
+    var surface by mutableStateOf(surface)
+        internal set
+    var surfaceGlass by mutableStateOf(surfaceGlass)
+        internal set
+    var primary by mutableStateOf(primary)
+        internal set
+    var onPrimary by mutableStateOf(onPrimary)
+        internal set
+    var secondary by mutableStateOf(secondary)
+        internal set
+    var textPrimary by mutableStateOf(textPrimary)
+        internal set
+    var textSecondary by mutableStateOf(textSecondary)
+        internal set
+    var success by mutableStateOf(success)
+        internal set
+    var warning by mutableStateOf(warning)
+        internal set
+    var error by mutableStateOf(error)
+        internal set
+    var outline by mutableStateOf(outline)
+        internal set
+    var outlineGlass by mutableStateOf(outlineGlass)
+        internal set
+}
+
+val DarkColorPalette = PrunanceColors(
+    background = DarkBackground,
+    surface = DarkSurface,
+    surfaceGlass = DarkSurfaceGlass,
+    primary = NeonBlue,
+    onPrimary = Color.Black,
+    secondary = NeonPurple,
+    textPrimary = TextPrimaryDark,
+    textSecondary = TextSecondaryDark,
+    success = SuccessGreen,
+    warning = WarningYellow,
+    error = ErrorRed,
+    outline = OutlineDark,
+    outlineGlass = OutlineGlass
 )
 
-// ── Dark scheme: true dark surfaces, light text ──────────────────────
-private val DarkColorScheme = darkColorScheme(
-    primary        = BrandAccent,
-    onPrimary      = Color.White,
-    secondary      = BrandSecondary,
-    onSecondary    = Color.White,
-    tertiary       = BrandAccent,
-    onTertiary     = Color.White,
-    background     = DarkBackground,
-    onBackground   = Grey100,
-    surface        = DarkSurface,
-    onSurface      = Grey100,
-    surfaceVariant = DarkDivider,
-    onSurfaceVariant = Grey400,
-    outline        = DarkDivider,
-    outlineVariant = DarkDivider,
-    error          = Error,
-    onError        = Color.White,
-)
+val LocalPrunanceColors = staticCompositionLocalOf<PrunanceColors> {
+    error("No PrunanceColors provided")
+}
+
+object PrunanceTheme {
+    val colors: PrunanceColors
+        @Composable
+        get() = LocalPrunanceColors.current
+    val typography: PrunanceTypography
+        @Composable
+        get() = LocalPrunanceTypography.current
+}
 
 @Composable
 fun PrunanceTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Disabled dynamic colour so the app always looks consistent
+    darkTheme: Boolean = true, // Default to dark for premium glassmorphism
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colors = DarkColorPalette
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-
-            // Status bar: match the surface colour (white in light, dark in dark)
-            window.statusBarColor = colorScheme.surface.toArgb()
-
-            // Navigation bar: match the surface colour too
-            window.navigationBarColor = colorScheme.surface.toArgb()
-
+            window.statusBarColor = colors.background.toArgb()
+            window.navigationBarColor = colors.background.toArgb()
             val insetsController = WindowCompat.getInsetsController(window, view)
-            // Light status bar icons when dark theme, dark icons when light theme
             insetsController.isAppearanceLightStatusBars = !darkTheme
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+    CompositionLocalProvider(
+        LocalPrunanceColors provides colors,
+        LocalPrunanceTypography provides prunanceTypography,
         content = content
     )
 }

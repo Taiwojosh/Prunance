@@ -1,6 +1,10 @@
 package com.prunance.app.ui.screens.pulse
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,27 +12,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.prunance.app.ui.components.GlassCard
+import com.prunance.app.ui.components.GlassProgressIndicator
+import com.prunance.app.ui.components.PrunanceText
+import com.prunance.app.ui.theme.PrunanceTheme
 
 @Composable
 fun PulseScreen(
@@ -51,178 +56,187 @@ fun PulseScreen(
         else -> currency
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .background(PrunanceTheme.colors.background)
     ) {
-        // ── Header ────────────────────────────────────────────────
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 20.dp)
         ) {
-            Column {
-                Text(
-                    text = if (userName.isNotBlank()) "Hello, $userName" else "Welcome",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Your financial pulse",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { viewModel.togglePrivacyMode(privacyMode) }) {
-                    Icon(
-                        imageVector = if (privacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = "Toggle Privacy",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+            // ── Header ────────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    PrunanceText(
+                        text = if (userName.isNotBlank()) "Hello, $userName" else "Welcome",
+                        style = PrunanceTheme.typography.headlineMedium,
+                        color = PrunanceTheme.colors.textPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    PrunanceText(
+                        text = "Your financial pulse",
+                        style = PrunanceTheme.typography.bodyMedium,
+                        color = PrunanceTheme.colors.textSecondary
                     )
                 }
-                IconButton(onClick = onNavigateToSettings) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ── Balance Card ──────────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Monthly Income",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = if (privacyMode) "$currencySymbol ••••••" else "$currencySymbol ${"%,.2f".format(monthlyIncome)}",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // ── KPI Grid ──────────────────────────────────────────────
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            KpiCard(
-                label = "Upcoming Bills",
-                value = if (privacyMode) "••••" else "$currencySymbol ${"%,.0f".format(unpaidBills)}",
-                modifier = Modifier.weight(1f)
-            )
-            KpiCard(
-                label = "Active Goals",
-                value = activeGoals.toString(),
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ── System Health ─────────────────────────────────────────
-        val healthRatio = if (monthlyIncome > 0) currentMonthSpent / monthlyIncome else 0.0
-        val isHealthy = healthRatio < 0.9
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isHealthy) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.errorContainer
-            )
-        ) {
-            Column(modifier = Modifier.padding(20.dp).fillMaxWidth()) {
-                Text(
-                    text = "System Health",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isHealthy) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(
-                        text = if (isHealthy) "Optimal" else "Critical",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isHealthy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    Text(
-                        text = if (privacyMode) "••••" else "${(healthRatio * 100).toInt()}% utilized",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (isHealthy) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-                LinearProgressIndicator(
-                    progress = healthRatio.coerceIn(0.0, 1.0).toFloat(),
-                    modifier = Modifier.fillMaxWidth().height(8.dp),
-                    color = if (isHealthy) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                    trackColor = if (isHealthy) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.3f)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ── Recent Transactions ───────────────────────────────────
-        if (recentTransactions.isNotEmpty()) {
-            Text(
-                text = "Recent Logs",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                recentTransactions.forEach { tx ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(PrunanceTheme.colors.surfaceGlass)
+                            .clickable { viewModel.togglePrivacyMode(privacyMode) },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Image(
+                            painter = rememberVectorPainter(if (privacyMode) Icons.Default.VisibilityOff else Icons.Default.Visibility),
+                            contentDescription = "Toggle Privacy",
+                            colorFilter = ColorFilter.tint(PrunanceTheme.colors.textPrimary)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(PrunanceTheme.colors.surfaceGlass)
+                            .clickable { onNavigateToSettings() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = rememberVectorPainter(Icons.Default.Settings),
+                            contentDescription = "Settings",
+                            colorFilter = ColorFilter.tint(PrunanceTheme.colors.textPrimary)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // ── Balance Card ──────────────────────────────────────────
+            GlassCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    PrunanceText(
+                        text = "Monthly Income",
+                        style = PrunanceTheme.typography.labelMedium,
+                        color = PrunanceTheme.colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    PrunanceText(
+                        text = if (privacyMode) "$currencySymbol ••••••" else "$currencySymbol ${"%,.2f".format(monthlyIncome)}",
+                        style = PrunanceTheme.typography.headlineLarge,
+                        color = PrunanceTheme.colors.textPrimary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── KPI Grid ──────────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                KpiCard(
+                    label = "Upcoming Bills",
+                    value = if (privacyMode) "••••" else "$currencySymbol ${"%,.0f".format(unpaidBills)}",
+                    modifier = Modifier.weight(1f)
+                )
+                KpiCard(
+                    label = "Active Goals",
+                    value = activeGoals.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // ── System Health ─────────────────────────────────────────
+            val healthRatio = if (monthlyIncome > 0) currentMonthSpent / monthlyIncome else 0.0
+            val isHealthy = healthRatio < 0.9
+
+            GlassCard(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(24.dp).fillMaxWidth()) {
+                    PrunanceText(
+                        text = "System Health",
+                        style = PrunanceTheme.typography.labelMedium,
+                        color = PrunanceTheme.colors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        PrunanceText(
+                            text = if (isHealthy) "Optimal" else "Critical",
+                            style = PrunanceTheme.typography.titleMedium,
+                            color = if (isHealthy) PrunanceTheme.colors.primary else PrunanceTheme.colors.error
+                        )
+                        PrunanceText(
+                            text = if (privacyMode) "••••" else "${(healthRatio * 100).toInt()}% utilized",
+                            style = PrunanceTheme.typography.labelMedium,
+                            color = PrunanceTheme.colors.textSecondary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    GlassProgressIndicator(
+                        progress = healthRatio.coerceIn(0.0, 1.0).toFloat(),
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
+                        color = if (isHealthy) PrunanceTheme.colors.primary else PrunanceTheme.colors.error
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // ── Recent Transactions ───────────────────────────────────
+            if (recentTransactions.isNotEmpty()) {
+                PrunanceText(
+                    text = "Recent Logs",
+                    style = PrunanceTheme.typography.titleLarge,
+                    color = PrunanceTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    recentTransactions.forEach { tx ->
+                        GlassCard(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column {
-                                Text(
-                                    text = tx.category,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = tx.date,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    PrunanceText(
+                                        text = tx.category,
+                                        style = PrunanceTheme.typography.titleMedium,
+                                        color = PrunanceTheme.colors.textPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    PrunanceText(
+                                        text = tx.date,
+                                        style = PrunanceTheme.typography.bodySmall,
+                                        color = PrunanceTheme.colors.textSecondary
+                                    )
+                                }
+                                PrunanceText(
+                                    text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.0f".format(tx.amount)}",
+                                    style = PrunanceTheme.typography.titleMedium,
+                                    color = PrunanceTheme.colors.primary
                                 )
                             }
-                            Text(
-                                text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.0f".format(tx.amount)}",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
                         }
                     }
                 }
@@ -237,24 +251,20 @@ private fun KpiCard(
     value: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+    GlassCard(
+        modifier = modifier
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
+        Column(modifier = Modifier.padding(20.dp)) {
+            PrunanceText(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = PrunanceTheme.typography.labelMedium,
+                color = PrunanceTheme.colors.textSecondary
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
+            Spacer(modifier = Modifier.height(8.dp))
+            PrunanceText(
                 text = value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                style = PrunanceTheme.typography.titleLarge,
+                color = PrunanceTheme.colors.textPrimary
             )
         }
     }

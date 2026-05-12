@@ -5,6 +5,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,33 +15,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.prunance.app.ui.components.GlassButton
+import com.prunance.app.ui.components.GlassCard
+import com.prunance.app.ui.components.GlassProgressIndicator
+import com.prunance.app.ui.components.PrunanceText
+import com.prunance.app.ui.theme.PrunanceTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
     viewModel: OnboardingViewModel = viewModel(),
@@ -53,93 +51,111 @@ fun OnboardingScreen(
     val currency by viewModel.currency.collectAsStateWithLifecycle()
     val budgetSplits by viewModel.budgetSplits.collectAsStateWithLifecycle()
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .background(PrunanceTheme.colors.background)
     ) {
-        // ── Progress indicator ────────────────────────────────────
-        Spacer(modifier = Modifier.height(40.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            repeat(3) { index ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (index <= currentStep) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.outlineVariant
-                        )
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // ── Animated step content ─────────────────────────────────
-        AnimatedContent(
-            targetState = currentStep,
-            transitionSpec = {
-                slideInHorizontally { width -> if (targetState > initialState) width else -width } togetherWith
-                        slideOutHorizontally { width -> if (targetState > initialState) -width else width }
-            },
-            modifier = Modifier.weight(1f),
-            label = "onboarding_step"
-        ) { step ->
-            when (step) {
-                0 -> WelcomeStep(name = name, onNameChanged = viewModel::onNameChanged)
-                1 -> IncomeStep(
-                    monthlyIncome = monthlyIncome,
-                    payday = payday,
-                    currency = currency,
-                    onIncomeChanged = viewModel::onMonthlyIncomeChanged,
-                    onPaydayChanged = viewModel::onPaydayChanged,
-                    onCurrencyChanged = viewModel::onCurrencyChanged
-                )
-                2 -> BudgetStep(
-                    budgetSplits = budgetSplits,
-                    monthlyIncome = monthlyIncome.toDoubleOrNull() ?: 0.0,
-                    currency = currency,
-                    onSplitChanged = viewModel::onBudgetSplitChanged
-                )
-            }
-        }
-
-        // ── Navigation buttons ────────────────────────────────────
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            if (currentStep > 0) {
-                OutlinedButton(
-                    onClick = viewModel::previousStep,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Back")
+            // ── Progress indicator ────────────────────────────────────
+            Spacer(modifier = Modifier.height(40.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                repeat(3) { index ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index <= currentStep) PrunanceTheme.colors.primary
+                                else PrunanceTheme.colors.surfaceGlass
+                            )
+                    )
                 }
             }
-            Button(
-                onClick = {
-                    if (currentStep < 2) {
-                        viewModel.nextStep()
-                    } else {
-                        viewModel.completeOnboarding(onComplete)
-                    }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // ── Animated step content ─────────────────────────────────
+            AnimatedContent(
+                targetState = currentStep,
+                transitionSpec = {
+                    slideInHorizontally { width -> if (targetState > initialState) width else -width } togetherWith
+                            slideOutHorizontally { width -> if (targetState > initialState) -width else width }
                 },
-                enabled = when (currentStep) {
+                modifier = Modifier.weight(1f),
+                label = "onboarding_step"
+            ) { step ->
+                when (step) {
+                    0 -> WelcomeStep(name = name, onNameChanged = viewModel::onNameChanged)
+                    1 -> IncomeStep(
+                        monthlyIncome = monthlyIncome,
+                        payday = payday,
+                        currency = currency,
+                        onIncomeChanged = viewModel::onMonthlyIncomeChanged,
+                        onPaydayChanged = viewModel::onPaydayChanged,
+                        onCurrencyChanged = viewModel::onCurrencyChanged
+                    )
+                    2 -> BudgetStep(
+                        budgetSplits = budgetSplits,
+                        monthlyIncome = monthlyIncome.toDoubleOrNull() ?: 0.0,
+                        currency = currency,
+                        onSplitChanged = viewModel::onBudgetSplitChanged
+                    )
+                }
+            }
+
+            // ── Navigation buttons ────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (currentStep > 0) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(PrunanceTheme.colors.surfaceGlass)
+                            .clickable { viewModel.previousStep() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        PrunanceText("Back", color = PrunanceTheme.colors.textPrimary)
+                    }
+                }
+                
+                val isNextEnabled = when (currentStep) {
                     0 -> name.isNotBlank()
                     1 -> monthlyIncome.isNotBlank() && payday.isNotBlank()
                     else -> true
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(if (currentStep < 2) "Continue" else "Get Started")
+                }
+                
+                GlassButton(
+                    onClick = {
+                        if (currentStep < 2) {
+                            viewModel.nextStep()
+                        } else {
+                            viewModel.completeOnboarding(onComplete)
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = isNextEnabled
+                ) {
+                    PrunanceText(
+                        if (currentStep < 2) "Continue" else "Get Started",
+                        color = if (isNextEnabled) Color.Black else PrunanceTheme.colors.textSecondary,
+                        style = PrunanceTheme.typography.titleMedium
+                    )
+                }
             }
         }
     }
@@ -154,39 +170,45 @@ private fun WelcomeStep(name: String, onNameChanged: (String) -> Unit) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
+        PrunanceText(
             text = "Welcome to\nPrunance",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+            style = PrunanceTheme.typography.headlineLarge,
+            color = PrunanceTheme.colors.textPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
+        PrunanceText(
             text = "Your personal finance command center.\nLet's set things up in under a minute.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = PrunanceTheme.typography.bodyLarge,
+            color = PrunanceTheme.colors.textSecondary
         )
         Spacer(modifier = Modifier.height(40.dp))
-        Text(
+        PrunanceText(
             text = "What should we call you?",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onBackground
+            style = PrunanceTheme.typography.titleMedium,
+            color = PrunanceTheme.colors.textPrimary
         )
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = name,
-            onValueChange = onNameChanged,
-            placeholder = { Text("Your name") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        GlassCard(modifier = Modifier.fillMaxWidth().height(56.dp), cornerRadius = 16.dp) {
+            BasicTextField(
+                value = name,
+                onValueChange = onNameChanged,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).align(Alignment.CenterStart),
+                textStyle = PrunanceTheme.typography.bodyLarge.copy(color = PrunanceTheme.colors.textPrimary),
+                singleLine = true,
+                cursorBrush = SolidColor(PrunanceTheme.colors.primary),
+                decorationBox = { innerTextField ->
+                    if (name.isEmpty()) {
+                        PrunanceText("Your name", style = PrunanceTheme.typography.bodyLarge, color = PrunanceTheme.colors.textSecondary.copy(alpha = 0.5f))
+                    }
+                    innerTextField()
+                }
+            )
+        }
     }
 }
 
 // ── Step 2: Income ────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun IncomeStep(
     monthlyIncome: String,
@@ -203,73 +225,84 @@ private fun IncomeStep(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
+        PrunanceText(
             text = "Your Income",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+            style = PrunanceTheme.typography.headlineMedium,
+            color = PrunanceTheme.colors.textPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
+        PrunanceText(
             text = "This helps us calculate your daily budget and track spending.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = PrunanceTheme.typography.bodyLarge,
+            color = PrunanceTheme.colors.textSecondary
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Currency selection
-        Text(
-            text = "Currency",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        PrunanceText("Currency", style = PrunanceTheme.typography.labelLarge, color = PrunanceTheme.colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             currencies.forEach { (code, label) ->
-                FilterChip(
-                    selected = currency == code,
-                    onClick = { onCurrencyChanged(code) },
-                    label = { Text(label) }
-                )
+                val isSelected = currency == code
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isSelected) PrunanceTheme.colors.primary.copy(alpha = 0.2f) else PrunanceTheme.colors.surfaceGlass)
+                        .clickable { onCurrencyChanged(code) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    PrunanceText(
+                        text = label,
+                        style = PrunanceTheme.typography.labelMedium,
+                        color = if (isSelected) PrunanceTheme.colors.primary else PrunanceTheme.colors.textPrimary
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Monthly income
-        Text(
-            text = "Monthly Income",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        PrunanceText("Monthly Income", style = PrunanceTheme.typography.labelLarge, color = PrunanceTheme.colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = monthlyIncome,
-            onValueChange = onIncomeChanged,
-            placeholder = { Text("e.g. 300000") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
+        GlassCard(modifier = Modifier.fillMaxWidth().height(56.dp), cornerRadius = 16.dp) {
+            BasicTextField(
+                value = monthlyIncome,
+                onValueChange = onIncomeChanged,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).align(Alignment.CenterStart),
+                textStyle = PrunanceTheme.typography.bodyLarge.copy(color = PrunanceTheme.colors.textPrimary),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                cursorBrush = SolidColor(PrunanceTheme.colors.primary),
+                decorationBox = { innerTextField ->
+                    if (monthlyIncome.isEmpty()) {
+                        PrunanceText("e.g. 300000", style = PrunanceTheme.typography.bodyLarge, color = PrunanceTheme.colors.textSecondary.copy(alpha = 0.5f))
+                    }
+                    innerTextField()
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Payday
-        Text(
-            text = "When do you get paid?",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        PrunanceText("When do you get paid?", style = PrunanceTheme.typography.labelLarge, color = PrunanceTheme.colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = payday,
-            onValueChange = onPaydayChanged,
-            placeholder = { Text("Day of month (1-31)") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
+        GlassCard(modifier = Modifier.fillMaxWidth().height(56.dp), cornerRadius = 16.dp) {
+            BasicTextField(
+                value = payday,
+                onValueChange = onPaydayChanged,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).align(Alignment.CenterStart),
+                textStyle = PrunanceTheme.typography.bodyLarge.copy(color = PrunanceTheme.colors.textPrimary),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                cursorBrush = SolidColor(PrunanceTheme.colors.primary),
+                decorationBox = { innerTextField ->
+                    if (payday.isEmpty()) {
+                        PrunanceText("Day of month (1-31)", style = PrunanceTheme.typography.bodyLarge, color = PrunanceTheme.colors.textSecondary.copy(alpha = 0.5f))
+                    }
+                    innerTextField()
+                }
+            )
+        }
     }
 }
 
@@ -295,67 +328,51 @@ private fun BudgetStep(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
+        PrunanceText(
             text = "Set Your Budget",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+            style = PrunanceTheme.typography.headlineMedium,
+            color = PrunanceTheme.colors.textPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
+        PrunanceText(
             text = "Allocate your income across categories. You can always adjust later.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = PrunanceTheme.typography.bodyLarge,
+            color = PrunanceTheme.colors.textSecondary
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Total allocation indicator
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Total allocated",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
+            PrunanceText("Total allocated", style = PrunanceTheme.typography.labelMedium, color = PrunanceTheme.colors.textSecondary)
+            PrunanceText(
                 text = "${totalPercent}%",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (totalPercent > 100) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onBackground
+                style = PrunanceTheme.typography.titleMedium,
+                color = if (totalPercent > 100) PrunanceTheme.colors.error else PrunanceTheme.colors.textPrimary
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        LinearProgressIndicator(
+        Spacer(modifier = Modifier.height(8.dp))
+        GlassProgressIndicator(
             progress = (totalPercent / 100f).coerceIn(0f, 1f),
-            modifier = Modifier.fillMaxWidth(),
-            trackColor = MaterialTheme.colorScheme.outlineVariant
+            modifier = Modifier.fillMaxWidth().height(8.dp),
+            color = if (totalPercent > 100) PrunanceTheme.colors.error else PrunanceTheme.colors.primary
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Category sliders
         budgetSplits.forEach { (category, percentage) ->
             val amount = monthlyIncome * percentage / 100.0
-            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+            Column(modifier = Modifier.padding(bottom = 24.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = category,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "$currencySymbol${"%,.0f".format(amount)} (${percentage}%)",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    PrunanceText(category, style = PrunanceTheme.typography.bodyLarge, color = PrunanceTheme.colors.textPrimary)
+                    PrunanceText("$currencySymbol${"%,.0f".format(amount)} (${percentage}%)", style = PrunanceTheme.typography.bodyMedium, color = PrunanceTheme.colors.textSecondary)
                 }
                 Slider(
                     value = percentage.toFloat(),

@@ -1,57 +1,57 @@
 package com.prunance.app.ui.screens.strategy
 
-import androidx.compose.material3.ExperimentalMaterial3Api
-
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.DismissDirection
+import androidx.compose.material3.DismissValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SwipeToDismiss
+import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.ui.text.font.FontWeight
-import com.prunance.app.data.local.entity.ExpenseEntity
-import java.util.Calendar
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.SwipeToDismiss
-import androidx.compose.material3.DismissValue
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.rememberDismissState
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.foundation.background
-import androidx.compose.material.icons.filled.Delete
-import com.prunance.app.data.local.entity.SavingsGoalEntity
 import com.prunance.app.data.local.entity.BillEntity
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
+import com.prunance.app.data.local.entity.ExpenseEntity
+import com.prunance.app.data.local.entity.SavingsGoalEntity
+import com.prunance.app.ui.components.GlassButton
+import com.prunance.app.ui.components.GlassCard
+import com.prunance.app.ui.components.GlassProgressIndicator
+import com.prunance.app.ui.components.PrunanceText
+import com.prunance.app.ui.theme.PrunanceTheme
+import java.util.Calendar
 
 private val tabLabels = listOf("Protocol", "Obligations", "Aspirations")
 
@@ -70,9 +70,9 @@ fun StrategyScreen(
     val goals by viewModel.goals.collectAsStateWithLifecycle(initialValue = emptyList())
     val bills by viewModel.bills.collectAsStateWithLifecycle(initialValue = emptyList())
 
-    var showAddGoalSheet by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var showAddBillSheet by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    var selectedGoalForFunds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<com.prunance.app.data.local.entity.SavingsGoalEntity?>(null) }
+    var showAddGoalSheet by remember { mutableStateOf(false) }
+    var showAddBillSheet by remember { mutableStateOf(false) }
+    var selectedGoalForFunds by remember { mutableStateOf<SavingsGoalEntity?>(null) }
 
     val currencySymbol = when (currency) {
         "NGN" -> "₦"
@@ -81,97 +81,115 @@ fun StrategyScreen(
         else -> currency
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 16.dp)
+            .background(PrunanceTheme.colors.background)
     ) {
-        // ── Header ────────────────────────────────────────────────
-        Text(
-            text = "Strategy",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // ── Sub-Tab Selector ──────────────────────────────────────
-        TabRow(
-            selectedTabIndex = activeTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 16.dp)
         ) {
-            tabLabels.forEachIndexed { index, label ->
-                Tab(
-                    selected = activeTab == index,
-                    onClick = { viewModel.onTabChanged(index) },
-                    text = {
-                        Text(
+            // ── Header ────────────────────────────────────────────────
+            PrunanceText(
+                text = "Strategy",
+                style = PrunanceTheme.typography.headlineMedium,
+                color = PrunanceTheme.colors.textPrimary,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Sub-Tab Selector ──────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                tabLabels.forEachIndexed { index, label ->
+                    val isSelected = activeTab == index
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { viewModel.onTabChanged(index) }
+                            .padding(vertical = 8.dp)
+                    ) {
+                        PrunanceText(
                             text = label,
-                            style = MaterialTheme.typography.labelLarge
+                            style = PrunanceTheme.typography.labelMedium,
+                            color = if (isSelected) PrunanceTheme.colors.primary else PrunanceTheme.colors.textSecondary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .height(2.dp)
+                                .fillMaxWidth(0.6f)
+                                .background(if (isSelected) PrunanceTheme.colors.primary else Color.Transparent)
                         )
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ── Tab Content ───────────────────────────────────────────
+            when (activeTab) {
+                0 -> BudgetTab(
+                    monthlyIncome = monthlyIncome,
+                    budgetSplits = budgetSplits,
+                    expenses = currentExpenses,
+                    currencySymbol = currencySymbol,
+                    privacyMode = privacyMode
+                )
+                1 -> BillsTab(
+                    bills = bills,
+                    currencySymbol = currencySymbol,
+                    privacyMode = privacyMode,
+                    onCreateBill = { showAddBillSheet = true },
+                    onToggleBillPaid = viewModel::toggleBillPaid,
+                    onDeleteBill = viewModel::deleteBill
+                )
+                2 -> GoalsTab(
+                    goals = goals,
+                    currencySymbol = currencySymbol,
+                    privacyMode = privacyMode,
+                    onCreateGoal = { showAddGoalSheet = true },
+                    onDeleteGoal = viewModel::deleteGoal,
+                    onNavigateToGoalDetail = onNavigateToGoalDetail
                 )
             }
         }
 
-        // ── Tab Content ───────────────────────────────────────────
-        when (activeTab) {
-            0 -> BudgetTab(
-                monthlyIncome = monthlyIncome,
-                budgetSplits = budgetSplits,
-                expenses = currentExpenses,
+        if (showAddGoalSheet) {
+            com.prunance.app.ui.components.AddGoalSheet(
                 currencySymbol = currencySymbol,
-                privacyMode = privacyMode
-            )
-            1 -> BillsTab(
-                bills = bills,
-                currencySymbol = currencySymbol,
-                privacyMode = privacyMode,
-                onCreateBill = { showAddBillSheet = true },
-                onToggleBillPaid = viewModel::toggleBillPaid,
-                onDeleteBill = viewModel::deleteBill
-            )
-            2 -> GoalsTab(
-                goals = goals,
-                currencySymbol = currencySymbol,
-                privacyMode = privacyMode,
-                onCreateGoal = { showAddGoalSheet = true },
-                onAddFunds = { selectedGoalForFunds = it },
-                onDeleteGoal = viewModel::deleteGoal,
-                onNavigateToGoalDetail = onNavigateToGoalDetail
+                onDismiss = { showAddGoalSheet = false },
+                onSave = { viewModel.addGoal(it) }
             )
         }
-    }
 
-    if (showAddGoalSheet) {
-        com.prunance.app.ui.components.AddGoalSheet(
-            currencySymbol = currencySymbol,
-            onDismiss = { showAddGoalSheet = false },
-            onSave = { viewModel.addGoal(it) }
-        )
-    }
+        if (showAddBillSheet) {
+            com.prunance.app.ui.components.AddBillSheet(
+                currencySymbol = currencySymbol,
+                onDismiss = { showAddBillSheet = false },
+                onSave = { viewModel.addBill(it) }
+            )
+        }
 
-    if (showAddBillSheet) {
-        com.prunance.app.ui.components.AddBillSheet(
-            currencySymbol = currencySymbol,
-            onDismiss = { showAddBillSheet = false },
-            onSave = { viewModel.addBill(it) }
-        )
-    }
-
-    selectedGoalForFunds?.let { goal ->
-        com.prunance.app.ui.components.AddFundsSheet(
-            currencySymbol = currencySymbol,
-            goalName = goal.name,
-            onDismiss = { selectedGoalForFunds = null },
-            onSave = { amount ->
-                val newAmount = goal.currentAmount + amount
-                viewModel.updateGoal(goal.copy(currentAmount = newAmount))
-            }
-        )
+        selectedGoalForFunds?.let { goal ->
+            com.prunance.app.ui.components.AddFundsSheet(
+                currencySymbol = currencySymbol,
+                goalName = goal.name,
+                onDismiss = { selectedGoalForFunds = null },
+                onSave = { amount ->
+                    val newAmount = goal.currentAmount + amount
+                    viewModel.updateGoal(goal.copy(currentAmount = newAmount))
+                }
+            )
+        }
     }
 }
 
@@ -193,46 +211,37 @@ private fun BudgetTab(
     val overallProgress = if (totalBudgeted > 0) (totalSpent / totalBudgeted).toFloat() else 0f
 
     LazyColumn(
-        contentPadding = PaddingValues(20.dp),
+        contentPadding = PaddingValues(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        // Overall Budget Summary
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    PrunanceText(
                         text = "Monthly Budget",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = PrunanceTheme.typography.labelMedium,
+                        color = PrunanceTheme.colors.textSecondary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
+                    PrunanceText(
                         text = if (privacyMode) "$currencySymbol •••• of $currencySymbol •••• left"
                         else "$currencySymbol ${"%,.0f".format((totalBudgeted - totalSpent).coerceAtLeast(0.0))} of $currencySymbol ${"%,.0f".format(totalBudgeted)} left",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = PrunanceTheme.typography.headlineMedium,
+                        color = PrunanceTheme.colors.textPrimary
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LinearProgressIndicator(
+                    Spacer(modifier = Modifier.height(16.dp))
+                    GlassProgressIndicator(
                         progress = overallProgress.coerceIn(0f, 1f),
                         modifier = Modifier.fillMaxWidth().height(8.dp),
-                        color = if (overallProgress > 0.85f) MaterialTheme.colorScheme.error 
-                                else if (overallProgress > 0.60f) MaterialTheme.colorScheme.tertiary 
-                                else MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.outlineVariant
+                        color = if (overallProgress > 0.85f) PrunanceTheme.colors.error 
+                                else if (overallProgress > 0.60f) PrunanceTheme.colors.warning 
+                                else PrunanceTheme.colors.primary
                     )
                 }
             }
         }
 
-        // Category Cards
         items(budgetSplits.entries.toList()) { (category, percent) ->
             val limit = monthlyIncome * (percent / 100.0)
             if (limit > 0) {
@@ -241,59 +250,52 @@ private fun BudgetTab(
                 val remaining = limit - spent
                 val dailyAllowance = remaining / daysRemaining
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
+                            PrunanceText(
                                 text = category,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = PrunanceTheme.typography.titleMedium,
+                                color = PrunanceTheme.colors.textPrimary
                             )
-                            Text(
+                            PrunanceText(
                                 text = if (privacyMode) "••••" else "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = PrunanceTheme.typography.labelMedium,
+                                color = PrunanceTheme.colors.textSecondary
                             )
                         }
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        Text(
+                        PrunanceText(
                             text = if (privacyMode) "$currencySymbol •••• / $currencySymbol ••••"
                             else "$currencySymbol ${"%,.0f".format(spent)} / $currencySymbol ${"%,.0f".format(limit)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        LinearProgressIndicator(
-                            progress = progress.coerceIn(0f, 1f),
-                            modifier = Modifier.fillMaxWidth().height(6.dp),
-                            color = if (progress > 0.85f) MaterialTheme.colorScheme.error 
-                                    else if (progress > 0.60f) MaterialTheme.colorScheme.tertiary 
-                                    else MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.outlineVariant
+                            style = PrunanceTheme.typography.bodyMedium,
+                            color = PrunanceTheme.colors.textSecondary
                         )
                         
                         Spacer(modifier = Modifier.height(12.dp))
                         
-                        Text(
+                        GlassProgressIndicator(
+                            progress = progress.coerceIn(0f, 1f),
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = if (progress > 0.85f) PrunanceTheme.colors.error 
+                                    else if (progress > 0.60f) PrunanceTheme.colors.warning 
+                                    else PrunanceTheme.colors.primary
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        PrunanceText(
                             text = if (remaining < 0) "⚠️ Over budget by $currencySymbol ${"%,.0f".format(-remaining)}"
                                    else if (privacyMode) "~$currencySymbol ••••/day for $daysRemaining days"
                                    else "~$currencySymbol ${"%,.0f".format(dailyAllowance)}/day for $daysRemaining days",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (remaining < 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            style = PrunanceTheme.typography.labelMedium,
+                            color = if (remaining < 0) PrunanceTheme.colors.error else PrunanceTheme.colors.textSecondary
                         )
                     }
                 }
@@ -313,23 +315,15 @@ private fun BillsTab(
     onDeleteBill: (BillEntity) -> Unit
 ) {
     if (bills.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            PlaceholderContent(
-                title = "No Obligations",
-                subtitle = "Manage recurring bills and subscription decay"
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onCreateBill) {
-                Text("Add Bill")
-            }
-        }
+        PlaceholderContent(
+            title = "No Obligations",
+            subtitle = "Manage recurring bills and subscription decay",
+            buttonText = "Add Bill",
+            onAction = onCreateBill
+        )
     } else {
         LazyColumn(
-            contentPadding = PaddingValues(20.dp),
+            contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -339,16 +333,20 @@ private fun BillsTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
+                    PrunanceText(
                         text = "Your Obligations",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = PrunanceTheme.typography.titleLarge,
+                        color = PrunanceTheme.colors.textPrimary
                     )
-                    Button(onClick = onCreateBill) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Bill", modifier = Modifier.size(18.dp))
+                    GlassButton(onClick = onCreateBill, modifier = Modifier.height(40.dp)) {
+                        Image(
+                            painter = rememberVectorPainter(Icons.Default.Add),
+                            contentDescription = "Add",
+                            colorFilter = ColorFilter.tint(Color.Black),
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("New Bill")
+                        PrunanceText("New", color = Color.Black, style = PrunanceTheme.typography.labelMedium)
                     }
                 }
             }
@@ -372,64 +370,68 @@ private fun BillsTab(
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
-                                .padding(horizontal = 20.dp),
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(PrunanceTheme.colors.error.copy(alpha = 0.2f))
+                                .padding(horizontal = 24.dp),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                Icons.Default.Delete,
+                            Image(
+                                painter = rememberVectorPainter(Icons.Default.Delete),
                                 contentDescription = "Delete",
-                                tint = MaterialTheme.colorScheme.onErrorContainer
+                                colorFilter = ColorFilter.tint(PrunanceTheme.colors.error)
                             )
                         }
                     },
                     dismissContent = {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
+                        GlassCard(modifier = Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier
-                                    .padding(16.dp)
+                                    .padding(20.dp)
                                     .fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Checkbox(
-                                    checked = bill.isPaid,
-                                    onCheckedChange = { 
-                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        onToggleBillPaid(bill) 
-                                    },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = MaterialTheme.colorScheme.primary,
-                                        uncheckedColor = MaterialTheme.colorScheme.outline
-                                    )
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (bill.isPaid) PrunanceTheme.colors.primary else PrunanceTheme.colors.surfaceGlass)
+                                        .clickable { 
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            onToggleBillPaid(bill)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (bill.isPaid) {
+                                        Image(
+                                            painter = rememberVectorPainter(Icons.Default.Check),
+                                            contentDescription = "Paid",
+                                            modifier = Modifier.size(16.dp),
+                                            colorFilter = ColorFilter.tint(Color.Black)
+                                        )
+                                    }
+                                }
                                 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
                                 
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(
+                                    PrunanceText(
                                         text = bill.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (bill.isPaid) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                                        style = PrunanceTheme.typography.titleMedium,
+                                        color = if (bill.isPaid) PrunanceTheme.colors.textSecondary else PrunanceTheme.colors.textPrimary
                                     )
-                                    Text(
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    PrunanceText(
                                         text = "Due: ${bill.dueDate} • ${bill.frequency}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = PrunanceTheme.typography.labelMedium,
+                                        color = PrunanceTheme.colors.textSecondary
                                     )
                                 }
                                 
-                                Text(
+                                PrunanceText(
                                     text = if (privacyMode) "$currencySymbol ••••" else "$currencySymbol ${"%,.0f".format(bill.amount)}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (bill.isPaid) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary
+                                    style = PrunanceTheme.typography.titleMedium,
+                                    color = if (bill.isPaid) PrunanceTheme.colors.textSecondary else PrunanceTheme.colors.primary
                                 )
                             }
                         }
@@ -447,28 +449,19 @@ private fun GoalsTab(
     currencySymbol: String,
     privacyMode: Boolean,
     onCreateGoal: () -> Unit,
-    onAddFunds: (SavingsGoalEntity) -> Unit,
     onDeleteGoal: (SavingsGoalEntity) -> Unit,
     onNavigateToGoalDetail: (String) -> Unit
 ) {
     if (goals.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            PlaceholderContent(
-                title = "No Active Aspirations",
-                subtitle = "Set long-term capital accumulation targets"
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onCreateGoal) {
-                Text("Create Goal")
-            }
-        }
+        PlaceholderContent(
+            title = "No Active Aspirations",
+            subtitle = "Set long-term capital accumulation targets",
+            buttonText = "Create Goal",
+            onAction = onCreateGoal
+        )
     } else {
         LazyColumn(
-            contentPadding = PaddingValues(20.dp),
+            contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -478,16 +471,20 @@ private fun GoalsTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
+                    PrunanceText(
                         text = "Your Targets",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = PrunanceTheme.typography.titleLarge,
+                        color = PrunanceTheme.colors.textPrimary
                     )
-                    Button(onClick = onCreateGoal) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Goal", modifier = Modifier.size(18.dp))
+                    GlassButton(onClick = onCreateGoal, modifier = Modifier.height(40.dp)) {
+                        Image(
+                            painter = rememberVectorPainter(Icons.Default.Add),
+                            contentDescription = "Add Goal",
+                            colorFilter = ColorFilter.tint(Color.Black),
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("New Goal")
+                        PrunanceText("New", color = Color.Black, style = PrunanceTheme.typography.labelMedium)
                     }
                 }
             }
@@ -511,60 +508,55 @@ private fun GoalsTab(
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.errorContainer, MaterialTheme.shapes.medium)
-                                .padding(horizontal = 20.dp),
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(PrunanceTheme.colors.error.copy(alpha = 0.2f))
+                                .padding(horizontal = 24.dp),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                Icons.Default.Delete,
+                            Image(
+                                painter = rememberVectorPainter(Icons.Default.Delete),
                                 contentDescription = "Delete",
-                                tint = MaterialTheme.colorScheme.onErrorContainer
+                                colorFilter = ColorFilter.tint(PrunanceTheme.colors.error)
                             )
                         }
                     },
                     dismissContent = {
-                        Card(
-                            modifier = Modifier.fillMaxWidth().clickable { onNavigateToGoalDetail(goal.id) },
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                        GlassCard(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.padding(20.dp)) {
+                            Column(modifier = Modifier.padding(20.dp).fillMaxWidth().clickable { onNavigateToGoalDetail(goal.id) }) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
+                                    PrunanceText(
                                         text = goal.name,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        style = PrunanceTheme.typography.titleMedium,
+                                        color = PrunanceTheme.colors.textPrimary
                                     )
-                                    Text(
+                                    PrunanceText(
                                         text = if (privacyMode) "••••" else "${(progress * 100).toInt()}%",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary
+                                        style = PrunanceTheme.typography.labelMedium,
+                                        color = PrunanceTheme.colors.primary
                                     )
                                 }
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
-                                Text(
+                                PrunanceText(
                                     text = if (privacyMode) "$currencySymbol •••• / $currencySymbol ••••"
                                     else "$currencySymbol ${"%,.0f".format(goal.currentAmount)} / $currencySymbol ${"%,.0f".format(goal.targetAmount)}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    style = PrunanceTheme.typography.bodyMedium,
+                                    color = PrunanceTheme.colors.textSecondary
                                 )
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                                LinearProgressIndicator(
+                                GlassProgressIndicator(
                                     progress = progress.coerceIn(0f, 1f),
-                                    modifier = Modifier.fillMaxWidth().height(8.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.outlineVariant
+                                    modifier = Modifier.fillMaxWidth().height(8.dp)
                                 )
 
                                 if (goal.deadline.isNotBlank() && goal.deadline != "No deadline") {
@@ -585,10 +577,10 @@ private fun GoalsTab(
                                         } else goal.deadline
                                     } else goal.deadline
                                     
-                                    Text(
+                                    PrunanceText(
                                         text = "Target Date: $displayDate",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = PrunanceTheme.typography.labelMedium,
+                                        color = PrunanceTheme.colors.textSecondary
                                     )
                                 }
                             }
@@ -601,7 +593,7 @@ private fun GoalsTab(
 }
 
 @Composable
-private fun PlaceholderContent(title: String, subtitle: String) {
+private fun PlaceholderContent(title: String, subtitle: String, buttonText: String, onAction: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -609,16 +601,20 @@ private fun PlaceholderContent(title: String, subtitle: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
+        PrunanceText(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = PrunanceTheme.typography.titleMedium,
+            color = PrunanceTheme.colors.textSecondary
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
+        Spacer(modifier = Modifier.height(8.dp))
+        PrunanceText(
             text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = PrunanceTheme.typography.bodySmall,
+            color = PrunanceTheme.colors.textSecondary.copy(alpha = 0.5f)
         )
+        Spacer(modifier = Modifier.height(24.dp))
+        GlassButton(onClick = onAction) {
+            PrunanceText(buttonText, color = Color.Black, style = PrunanceTheme.typography.titleMedium)
+        }
     }
 }

@@ -4,25 +4,33 @@ import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -36,6 +44,8 @@ import androidx.navigation.compose.rememberNavController
 import com.prunance.app.data.repository.FinanceRepository
 import com.prunance.app.navigation.BottomNavItem
 import com.prunance.app.ui.components.AddExpenseSheet
+import com.prunance.app.ui.components.GlassCard
+import com.prunance.app.ui.components.PrunanceText
 import com.prunance.app.ui.screens.analysis.AnalysisScreen
 import com.prunance.app.ui.screens.ledger.LedgerScreen
 import com.prunance.app.ui.screens.onboarding.OnboardingScreen
@@ -59,7 +69,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrunanceRoot() {
     val context = LocalContext.current
@@ -68,15 +77,14 @@ fun PrunanceRoot() {
     val hasCompletedOnboarding by repository.prefs.hasCompletedOnboarding
         .collectAsStateWithLifecycle(initialValue = null)
 
-    // Wait for DataStore to load before showing anything
     when (hasCompletedOnboarding) {
         null -> {
-            // Loading state — just show background
+            // Loading state
         }
         false -> {
             OnboardingScreen(
                 onComplete = {
-                    // The state will automatically update via the Flow
+                    // Auto update
                 }
             )
         }
@@ -86,7 +94,6 @@ fun PrunanceRoot() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrunanceApp() {
     val navController = rememberNavController()
@@ -104,26 +111,17 @@ fun PrunanceApp() {
         else -> currency
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = { PrunanceBottomBar(navController) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showExpenseSheet = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add expense")
-            }
-        }
-    ) { innerPadding ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PrunanceTheme.colors.background)
+    ) {
         NavHost(
             navController = navController,
             startDestination = BottomNavItem.Pulse.route,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = 88.dp) // Space for bottom bar
         ) {
             composable(BottomNavItem.Pulse.route) { 
                 PulseScreen(onNavigateToSettings = { navController.navigate("settings") }) 
@@ -149,9 +147,22 @@ fun PrunanceApp() {
                 )
             }
         }
+
+        // FAB
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 104.dp, end = 24.dp)
+        ) {
+            GlassFab(onClick = { showExpenseSheet = true })
+        }
+
+        // Bottom Bar
+        Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+            PrunanceBottomBar(navController)
+        }
     }
 
-    // ── Expense entry bottom sheet ────────────────────────────────
     if (showExpenseSheet) {
         AddExpenseSheet(
             currencySymbol = currencySymbol,
@@ -166,43 +177,74 @@ fun PrunanceApp() {
 }
 
 @Composable
+fun GlassFab(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(PrunanceTheme.colors.primary)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = rememberVectorPainter(Icons.Default.Add),
+            contentDescription = "Add",
+            colorFilter = ColorFilter.tint(Color.Black)
+        )
+    }
+}
+
+@Composable
 private fun PrunanceBottomBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 0.dp
+    GlassCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        cornerRadius = 32.dp
     ) {
-        BottomNavItem.items.forEach { item ->
-            val selected = currentRoute == item.route
-            NavigationBarItem(
-                selected = selected,
-                onClick = {
-                    if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(BottomNavItem.Pulse.route) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavItem.items.forEach { item ->
+                val selected = currentRoute == item.route
+                val contentColor = if (selected) PrunanceTheme.colors.primary else PrunanceTheme.colors.textSecondary
+
+                Column(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .clickable {
+                            if (currentRoute != item.route) {
+                                navController.navigate(item.route) {
+                                    popUpTo(BottomNavItem.Pulse.route) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
                         }
-                    }
-                },
-                icon = {
-                    Icon(
-                        imageVector = if (selected) item.filledIcon else item.outlinedIcon,
-                        contentDescription = item.label
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = rememberVectorPainter(if (selected) item.filledIcon else item.outlinedIcon),
+                        contentDescription = item.label,
+                        colorFilter = ColorFilter.tint(contentColor)
                     )
-                },
-                label = { Text(item.label, style = MaterialTheme.typography.labelSmall) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    indicatorColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            )
+                    if (selected) {
+                        PrunanceText(
+                            text = item.label,
+                            style = PrunanceTheme.typography.labelSmall,
+                            color = contentColor
+                        )
+                    }
+                }
+            }
         }
     }
 }
