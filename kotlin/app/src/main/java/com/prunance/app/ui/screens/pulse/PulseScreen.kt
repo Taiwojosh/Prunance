@@ -162,7 +162,8 @@ fun PulseScreen(
 
             // ── System Health ─────────────────────────────────────────
             val healthRatio = if (monthlyIncome > 0) currentMonthSpent / monthlyIncome else 0.0
-            val isHealthy = healthRatio < 0.9
+            val safeHealthRatio = if (healthRatio.isNaN() || healthRatio.isInfinite()) 0.0 else healthRatio.coerceIn(0.0, 1.0)
+            val isHealthy = safeHealthRatio < 0.9
 
             GlassCard(
                 modifier = Modifier.fillMaxWidth()
@@ -182,7 +183,7 @@ fun PulseScreen(
                             color = if (isHealthy) PrunanceTheme.colors.primary else PrunanceTheme.colors.error
                         )
                         PrunanceText(
-                            text = if (privacyMode) "••••" else "${(healthRatio * 100).toInt()}% utilized",
+                            text = if (privacyMode) "••••" else "${(safeHealthRatio * 100).toInt()}% utilized",
                             style = PrunanceTheme.typography.labelMedium,
                             color = PrunanceTheme.colors.textSecondary
                         )
@@ -190,7 +191,7 @@ fun PulseScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
                     GlassProgressIndicator(
-                        progress = healthRatio.coerceIn(0.0, 1.0).toFloat(),
+                        progress = safeHealthRatio.toFloat(),
                         modifier = Modifier.fillMaxWidth().height(8.dp),
                         color = if (isHealthy) PrunanceTheme.colors.primary else PrunanceTheme.colors.error
                     )

@@ -19,6 +19,7 @@ fun GlassProgressIndicator(
     color: Color = PrunanceTheme.colors.primary,
     trackColor: Color = PrunanceTheme.colors.outlineGlass
 ) {
+    val safeProgress = if (progress.isNaN() || progress.isInfinite()) 0f else progress.coerceIn(0f, 1f)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
@@ -27,7 +28,7 @@ fun GlassProgressIndicator(
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(fraction = progress)
+                .fillMaxWidth(fraction = safeProgress)
                 .clip(RoundedCornerShape(50))
                 .background(color)
         )

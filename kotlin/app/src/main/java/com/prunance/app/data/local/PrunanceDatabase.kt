@@ -32,7 +32,9 @@ abstract class PrunanceDatabase : RoomDatabase() {
                     context.applicationContext,
                     PrunanceDatabase::class.java,
                     "prunance_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }
