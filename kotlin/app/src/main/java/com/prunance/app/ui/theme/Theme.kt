@@ -1,6 +1,8 @@
 package com.prunance.app.ui.theme
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -80,6 +82,15 @@ object PrunanceTheme {
         get() = LocalPrunanceTypography.current
 }
 
+private fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
 @Composable
 fun PrunanceTheme(
     darkTheme: Boolean = true, // Default to dark for premium glassmorphism
@@ -90,12 +101,20 @@ fun PrunanceTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colors.background.toArgb()
-            window.navigationBarColor = colors.background.toArgb()
-            val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = !darkTheme
-            insetsController.isAppearanceLightNavigationBars = !darkTheme
+            try {
+                val activity = view.context.findActivity()
+                if (activity != null) {
+                    val window = activity.window
+                    window.statusBarColor = colors.background.toArgb()
+                    window.navigationBarColor = colors.background.toArgb()
+                    val insetsController = WindowCompat.getInsetsController(window, view)
+                    insetsController.isAppearanceLightStatusBars = !darkTheme
+                    insetsController.isAppearanceLightNavigationBars = !darkTheme
+                }
+            } catch (e: Exception) {
+                // Safely catch any Window/View status bar decoration errors on specific Android manufacturer OS skins
+                e.printStackTrace()
+            }
         }
     }
 
