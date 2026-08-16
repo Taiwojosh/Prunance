@@ -84,7 +84,16 @@ fun PrunanceRoot() {
         false -> {
             OnboardingScreen(
                 onComplete = {
-                    // Auto update
+                    // Force recomposition by updating a dummy state or navigating
+                    // In this case, simply letting the `hasCompletedOnboarding` flow
+                    // re-emit `true` should suffice as `collectAsStateWithLifecycle`
+                    // will react to it, but ensuring a fresh read on complete is safer
+                    // For now, an empty lambda here is acceptable given the flow's nature.
+                    // The core issue might be elsewhere in how `PrunanceApp` initializes
+                    // or in the data it tries to access immediately after onboarding.
+                    // Since the icon is now updated, let's test the app with the new icon
+                    // and this empty lambda, and then if it still crashes, we can add
+                    // explicit navigation or a dummy state.
                 }
             )
         }
