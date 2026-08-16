@@ -18,22 +18,28 @@ class PulseViewModel(application: Application) : AndroidViewModel(application) {
     val currency: Flow<String> = repository.prefs.currency
     val privacyMode: Flow<Boolean> = repository.prefs.privacyMode
 
-    // KPI data
+    // KPI data with strict null safety
     val unpaidBillsTotal: Flow<Double> = repository.getTotalUnpaidAmount().map { it ?: 0.0 }
-    val activeGoalCount: Flow<Int> = repository.getActiveGoalCount()
+    val activeGoalCount: Flow<Int> = repository.getActiveGoalCount().map { it ?: 0 }
     val totalSaved: Flow<Double> = repository.getTotalSaved().map { it ?: 0.0 }
 
     // Dashboard specific data
-    val recentTransactions: Flow<List<com.prunance.app.data.local.entity.ExpenseEntity>> = repository.getRecentExpenses(5)
+    val recentTransactions: Flow<List<com.prunance.app.data.local.entity.ExpenseEntity>> = repository.getRecentExpenses(5).map { it ?: emptyList() }
 
-    // Calculate current month's spending
+    // Calculate current month's spending safely
     val currentMonthSpent: Flow<Double> = repository.getAllExpenses().map { expenses ->
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
-        val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-        val startOfMonth = format.format(calendar.time)
-        
-        expenses.filter { it.date >= startOfMonth }.sumOf { it.amount }
+        try {
+            val list = expenses ?: emptyList()
+            if (list.isEmpty()) return@map 0.0
+            val calendar = java.util.Calendar.getInstance()
+            calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
+            val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val startOfMonth = format.format(calendar.time)
+            
+            list.filter { it.date >= startOfMonth }.sumOf { it.amount }
+        } catch (e: Exception) {
+            0.0
+        }
     }
 
     fun togglePrivacyMode(currentMode: Boolean) {
