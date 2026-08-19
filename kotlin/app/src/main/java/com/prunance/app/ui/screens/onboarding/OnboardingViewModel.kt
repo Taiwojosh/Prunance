@@ -77,20 +77,23 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
 
     fun completeOnboarding(onComplete: () -> Unit) {
         viewModelScope.launch {
-            val income = _monthlyIncome.value.toDoubleOrNull() ?: 0.0
-            val day = _payday.value.toIntOrNull() ?: 25
+            try {
+                val income = _monthlyIncome.value.toDoubleOrNull() ?: 0.0
+                val day = _payday.value.toIntOrNull() ?: 25
 
-            repository.prefs.saveProfile(
-                name = _name.value.trim(),
-                monthlyIncome = income,
-                payday = day,
-                currency = _currency.value,
-                lowBalanceThreshold = income * 0.1, // Default: 10% of income
-                budgetSplitsMap = _budgetSplits.value
-            )
-            // No longer calling onComplete() here; MainActivity observes hasCompletedOnboarding
-            // which is now set to true by saveProfile.
-            // The SplashViewModel will then handle the transition to AppReady.
+                repository.prefs.saveProfile(
+                    name = _name.value.trim(),
+                    monthlyIncome = income,
+                    payday = day,
+                    currency = _currency.value,
+                    lowBalanceThreshold = income * 0.1, // Default: 10% of income
+                    budgetSplitsMap = _budgetSplits.value
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("OnboardingViewModel", "Error saving onboarding profile", e)
+            } finally {
+                onComplete()
+            }
         }
     }
 }
