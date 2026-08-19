@@ -63,25 +63,43 @@ class UserPreferences(private val context: Context) {
         lowBalanceThreshold: Double,
         budgetSplitsMap: Map<String, Int>
     ) {
-        context.dataStore.edit { prefs ->
-            prefs[KEY_NAME] = name
-            prefs[KEY_MONTHLY_INCOME] = monthlyIncome
-            prefs[KEY_PAYDAY] = payday
-            prefs[KEY_CURRENCY] = currency
-            prefs[KEY_LOW_BALANCE_THRESHOLD] = lowBalanceThreshold
-            prefs[KEY_HAS_COMPLETED_ONBOARDING] = true
-            prefs[KEY_BUDGET_SPLITS] = budgetSplitsMap.entries.joinToString(",") { "${it.key}:${it.value}" }
+        try {
+            context.dataStore.edit { prefs ->
+                prefs[KEY_NAME] = name
+                prefs[KEY_MONTHLY_INCOME] = monthlyIncome
+                prefs[KEY_PAYDAY] = payday
+                prefs[KEY_CURRENCY] = currency
+                prefs[KEY_LOW_BALANCE_THRESHOLD] = lowBalanceThreshold
+                prefs[KEY_HAS_COMPLETED_ONBOARDING] = true
+                prefs[KEY_BUDGET_SPLITS] = budgetSplitsMap.entries.joinToString(",") { "${it.key}:${it.value}" }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("UserPreferences", "Error saving profile to DataStore", e)
+            // Report to analytics placeholder: Analytics.logError(e)
+            throw e
         }
     }
 
     suspend fun setPrivacyMode(enabled: Boolean) {
-        context.dataStore.edit { it[KEY_PRIVACY_MODE] = enabled }
+        try {
+            context.dataStore.edit { it[KEY_PRIVACY_MODE] = enabled }
+        } catch (e: Exception) {
+            android.util.Log.e("UserPreferences", "Error setting privacy mode in DataStore", e)
+            // Report to analytics placeholder: Analytics.logError(e)
+            throw e
+        }
     }
 
     suspend fun setPrivacyLock(pin: String?) {
-        context.dataStore.edit {
-            if (pin != null) it[KEY_PRIVACY_LOCK] = pin
-            else it.remove(KEY_PRIVACY_LOCK)
+        try {
+            context.dataStore.edit {
+                if (pin != null) it[KEY_PRIVACY_LOCK] = pin
+                else it.remove(KEY_PRIVACY_LOCK)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("UserPreferences", "Error setting privacy lock in DataStore", e)
+            // Report to analytics placeholder: Analytics.logError(e)
+            throw e
         }
     }
 }

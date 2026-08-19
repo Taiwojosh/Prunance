@@ -28,15 +28,21 @@ abstract class PrunanceDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): PrunanceDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    PrunanceDatabase::class.java,
-                    "prunance_database"
-                )
-                .fallbackToDestructiveMigration()
-                .build()
-                INSTANCE = instance
-                instance
+                try {
+                    val instance = Room.databaseBuilder(
+                        context.applicationContext,
+                        PrunanceDatabase::class.java,
+                        "prunance_database"
+                    )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    INSTANCE = instance
+                    instance
+                } catch (e: Exception) {
+                    android.util.Log.e("PrunanceDatabase", "Error building Room database", e)
+                    // Report to analytics placeholder: Analytics.logError(e)
+                    throw e // Re-throw as this is critical
+                }
             }
         }
     }

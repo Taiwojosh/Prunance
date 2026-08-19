@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.prunance.app.data.repository.FinanceRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class OnboardingViewModel(application: Application) : AndroidViewModel(application) {
@@ -87,8 +88,9 @@ class OnboardingViewModel(application: Application) : AndroidViewModel(applicati
                 lowBalanceThreshold = income * 0.1, // Default: 10% of income
                 budgetSplitsMap = _budgetSplits.value
             )
-
-            onComplete()
+            // No longer calling onComplete() here; MainActivity observes hasCompletedOnboarding
+            // which is now set to true by saveProfile.
+            // The SplashViewModel will then handle the transition to AppReady.
         }
     }
 }

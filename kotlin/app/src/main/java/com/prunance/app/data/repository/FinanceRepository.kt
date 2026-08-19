@@ -14,11 +14,25 @@ import kotlinx.coroutines.flow.Flow
  */
 class FinanceRepository(context: Context) {
 
-    private val db = PrunanceDatabase.getDatabase(context)
-    private val expenseDao = db.expenseDao()
-    private val billDao = db.billDao()
-    private val savingsGoalDao = db.savingsGoalDao()
-    val prefs = UserPreferences(context)
+    private val db: PrunanceDatabase
+    private val expenseDao: ExpenseDao
+    private val billDao: BillDao
+    private val savingsGoalDao: SavingsGoalDao
+    val prefs: UserPreferences
+
+    init {
+        try {
+            db = PrunanceDatabase.getDatabase(context)
+            expenseDao = db.expenseDao()
+            billDao = db.billDao()
+            savingsGoalDao = db.savingsGoalDao()
+            prefs = UserPreferences(context)
+        } catch (e: Exception) {
+            android.util.Log.e("FinanceRepository", "Critical error initializing database or DataStore", e)
+            // Report to analytics placeholder: Analytics.logError(e)
+            throw e // Re-throw as this is unrecoverable for the repository
+        }
+    }
 
     // ── Expenses ──────────────────────────────────────────────────────
 
