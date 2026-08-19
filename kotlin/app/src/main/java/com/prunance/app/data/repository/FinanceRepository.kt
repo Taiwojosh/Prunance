@@ -2,6 +2,9 @@ package com.prunance.app.data.repository
 
 import android.content.Context
 import com.prunance.app.data.local.PrunanceDatabase
+import com.prunance.app.data.local.dao.BillDao
+import com.prunance.app.data.local.dao.ExpenseDao
+import com.prunance.app.data.local.dao.SavingsGoalDao
 import com.prunance.app.data.local.entity.BillEntity
 import com.prunance.app.data.local.entity.ExpenseEntity
 import com.prunance.app.data.local.entity.SavingsGoalEntity

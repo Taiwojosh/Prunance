@@ -51,6 +51,7 @@ import com.prunance.app.ui.screens.ledger.LedgerScreen
 import com.prunance.app.ui.screens.splash.SplashScreen
 import com.prunance.app.ui.screens.splash.SplashState
 import com.prunance.app.ui.screens.splash.SplashViewModel
+import com.prunance.app.ui.screens.onboarding.OnboardingScreen
 import com.prunance.app.ui.screens.pulse.PulseScreen
 import com.prunance.app.ui.screens.strategy.StrategyScreen
 import com.prunance.app.ui.theme.PrunanceTheme
@@ -73,9 +74,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PrunanceRoot() {
-    val context = LocalContext.current
-    val repository = remember { FinanceRepository(context) }
-
     val splashViewModel: SplashViewModel = viewModel()
     val splashState by splashViewModel.splashState.collectAsStateWithLifecycle()
 
