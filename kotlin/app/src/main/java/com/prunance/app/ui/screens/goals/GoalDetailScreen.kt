@@ -171,8 +171,8 @@ fun GoalDetailScreen(
                             currentGoal.deadline.let { deadline ->
                                 if (deadline.isNotBlank() && deadline != "No deadline") {
                                     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                    val date = sdf.parse(deadline)
-                                    val diff = date.time - System.currentTimeMillis()
+                                    val date = try { sdf.parse(deadline) } catch (e: Exception) { null }
+                                    val diff = (date?.time ?: System.currentTimeMillis()) - System.currentTimeMillis()
                                     val daysLeft = (diff / (1000 * 60 * 60 * 24)).coerceAtLeast(1)
                                     
                                     DetailRow(label = "Days Left", value = "$daysLeft days")
